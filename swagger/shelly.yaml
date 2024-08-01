@@ -1,0 +1,32 @@
+openapi: 3.0.3
+info:
+  title: Shelly - IoT devices
+  description: Shelly
+  version: 1.0.0
+
+tags:
+  - name: Shelly
+    description: IoT
+
+paths: {}
+
+components:
+  schemas:
+    weather:
+      type: object
+      properties:
+        type:
+          type: integer
+          format: int32
+          enum:
+            - 1
+            - 2
+            - 3
+          x-enum-descriptions:
+            - 'Blue sky'
+            - 'Slightly overcast'
+            - 'Take an umbrella with you'
+          x-enum-varnames:
+            - Sunny
+            - Cloudy
+            - Rainy
