@@ -129,7 +129,7 @@
 							<inputSpec>${project.basedir}/swagger/shelly.yaml</inputSpec>
 							<generatorName>java</generatorName>
 							<library>feign</library>
-							<modelPackage>cloud.cholewa.eaton.model</modelPackage>
+							<modelPackage>cloud.cholewa.shelly.model</modelPackage>
 							<output>${project.basedir}</output>
 							<generateApis>false</generateApis>
 							<generateSupportingFiles>false</generateSupportingFiles>
