@@ -12,8 +12,21 @@ paths: {}
 
 components:
   schemas:
-    Example:
+    weather:
       type: object
       properties:
-        name:
-          type: string
+        type:
+          type: integer
+          format: int32
+          enum:
+            - 1
+            - 2
+            - 3
+          x-enum-descriptions:
+            - 'Blue sky'
+            - 'Slightly overcast'
+            - 'Take an umbrella with you'
+          x-enum-varnames:
+            - Sunny
+            - Cloudy
+            - Rainy
