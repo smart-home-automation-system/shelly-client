@@ -12,5 +12,5 @@
 ![GitHub contributors](https://img.shields.io/github/contributors/smart-home-automation-system/shelly-client?style=plastic)
 ![GitHub pull requests](https://img.shields.io/github/issues-pr-raw/smart-home-automation-system/shelly-client?style=plastic)
 
-![GitHub last commit](https://img.shields.io/github/last-commit/smart-home-automation-system/shelly-clietn?style=plastic)
+![GitHub last commit](https://img.shields.io/github/last-commit/smart-home-automation-system/shelly-client?style=plastic)
 ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/smart-home-automation-system/shelly-client?style=plastic)
