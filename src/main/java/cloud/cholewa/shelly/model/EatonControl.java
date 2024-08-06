@@ -16,45 +16,32 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.annotation.JsonTypeName;
 import com.fasterxml.jackson.annotation.JsonValue;
 import jakarta.validation.constraints.*;
 import java.util.Objects;
 
 /**
- * Weather
+ * EatonControl
  */
-@JsonPropertyOrder({ Weather.JSON_PROPERTY_TYPE })
-@JsonTypeName("weather")
+@JsonPropertyOrder({ EatonControl.JSON_PROPERTY_CONTROL })
 @jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", comments = "Generator version: 7.7.0")
-public class Weather {
+public class EatonControl {
     /**
-     * Gets or Sets type
+     * Gets or Sets control
      */
-    public enum TypeEnum {
-        /**
-         * Blue sky
-         */
-        Sunny(1),
+    public enum ControlEnum {
+        SOX("5A"),
 
-        /**
-         * Slightly overcast
-         */
-        Cloudy(2),
+        EOX("A5");
 
-        /**
-         * Take an umbrella with you
-         */
-        Rainy(3);
+        private String value;
 
-        private Integer value;
-
-        TypeEnum(Integer value) {
+        ControlEnum(String value) {
             this.value = value;
         }
 
         @JsonValue
-        public Integer getValue() {
+        public String getValue() {
             return value;
         }
 
@@ -64,8 +51,8 @@ public class Weather {
         }
 
         @JsonCreator
-        public static TypeEnum fromValue(Integer value) {
-            for (TypeEnum b : TypeEnum.values()) {
+        public static ControlEnum fromValue(String value) {
+            for (ControlEnum b : ControlEnum.values()) {
                 if (b.value.equals(value)) {
                     return b;
                 }
@@ -74,36 +61,36 @@ public class Weather {
         }
     }
 
-    public static final String JSON_PROPERTY_TYPE = "type";
-    private TypeEnum type;
+    public static final String JSON_PROPERTY_CONTROL = "control";
+    private ControlEnum control;
 
-    public Weather() {
+    public EatonControl() {
     }
 
-    public Weather type(TypeEnum type) {
+    public EatonControl control(ControlEnum control) {
 
-        this.type = type;
+        this.control = control;
         return this;
     }
 
     /**
-     * Get type
+     * Get control
      *
-     * @return type
+     * @return control
      */
     @jakarta.annotation.Nullable
 
-    @JsonProperty(JSON_PROPERTY_TYPE)
+    @JsonProperty(JSON_PROPERTY_CONTROL)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
 
-    public TypeEnum getType() {
-        return type;
+    public ControlEnum getControl() {
+        return control;
     }
 
-    @JsonProperty(JSON_PROPERTY_TYPE)
+    @JsonProperty(JSON_PROPERTY_CONTROL)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-    public void setType(TypeEnum type) {
-        this.type = type;
+    public void setControl(ControlEnum control) {
+        this.control = control;
     }
 
     @Override
@@ -114,20 +101,20 @@ public class Weather {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        Weather weather = (Weather) o;
-        return Objects.equals(this.type, weather.type);
+        EatonControl eatonControl = (EatonControl) o;
+        return Objects.equals(this.control, eatonControl.control);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(type);
+        return Objects.hash(control);
     }
 
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("class Weather {\n");
-        sb.append("    type: ").append(toIndentedString(type)).append("\n");
+        sb.append("class EatonControl {\n");
+        sb.append("    control: ").append(toIndentedString(control)).append("\n");
         sb.append("}");
         return sb.toString();
     }
