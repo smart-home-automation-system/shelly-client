@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-				 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>cholewa.cloud</groupId>
@@ -20,13 +19,18 @@
 		<junit-jupiter.version>5.10.2</junit-jupiter.version>
 		<fasterxml-jackson.version>2.17.2</fasterxml-jackson.version>
 		<swagger-annotations.version>2.2.22</swagger-annotations.version>
+		<jakarta.annotation-api.version>3.0.0</jakarta.annotation-api.version>
+		<jakarta.validation-api.version>3.1.0</jakarta.validation-api.version>
 
 		<!--  plugins versions-->
 		<maven-enforcer-plugin.version>3.5.0</maven-enforcer-plugin.version>
 		<maven-surefire-plugin.version>3.3.1</maven-surefire-plugin.version>
 		<tidy-maven-plugin.version>1.3.0</tidy-maven-plugin.version>
 		<versions-maven-plugin.version>2.17.1</versions-maven-plugin.version>
+
 		<openapi-generator.version>7.7.0</openapi-generator.version>
+		<formatter-maven-plugin.version>2.24.1</formatter-maven-plugin.version>
+		<impsort-maven-plugin.version>1.10.0</impsort-maven-plugin.version>
 	</properties>
 
 	<dependencies>
@@ -46,6 +50,18 @@
 			<artifactId>swagger-annotations</artifactId>
 			<version>${swagger-annotations.version}</version>
 		</dependency>
+		<dependency>
+			<groupId>jakarta.annotation</groupId>
+			<artifactId>jakarta.annotation-api</artifactId>
+			<version>${jakarta.annotation-api.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>jakarta.validation</groupId>
+			<artifactId>jakarta.validation-api</artifactId>
+			<version>${jakarta.validation-api.version}</version>
+		</dependency>
+
+
 
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -66,12 +82,6 @@
 			<artifactId>junit-jupiter-params</artifactId>
 			<version>${junit-jupiter.version}</version>
 			<scope>test</scope>
-		</dependency>
-		<dependency>
-			<groupId>org.jetbrains</groupId>
-			<artifactId>annotations</artifactId>
-			<version>24.1.0</version>
-			<scope>compile</scope>
 		</dependency>
 	</dependencies>
 
@@ -153,7 +163,57 @@
 							<generateSupportingFiles>false</generateSupportingFiles>
 							<generateModelTests>false</generateModelTests>
 							<generateModelDocumentation>false</generateModelDocumentation>
+							<configOptions>
+								<hideGenerationTimestamp>true</hideGenerationTimestamp>
+								<useJakartaEe>true</useJakartaEe>
+								<generateBuilders>true</generateBuilders>
+								<useBeanValidation>true</useBeanValidation>
+								<configHelp>true</configHelp>
+							</configOptions>
 						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>net.revelc.code.formatter</groupId>
+				<artifactId>formatter-maven-plugin</artifactId>
+				<version>${formatter-maven-plugin.version}</version>
+				<configuration>
+					<compilerCompliance>${java.version}</compilerCompliance>
+					<compilerSource>${java.version}</compilerSource>
+					<compilerTargetPlatform>${java.version}</compilerTargetPlatform>
+					<directories>
+						<directory>${project.basedir}/src/main/java/cloud/cholewa/shelly/model</directory>
+					</directories>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>format</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>net.revelc.code</groupId>
+				<artifactId>impsort-maven-plugin</artifactId>
+				<version>${impsort-maven-plugin.version}</version>
+				<configuration>
+					<compliance>${java.version}</compliance>
+					<removeUnused>true</removeUnused>
+					<staticAfter>true</staticAfter>
+					<treatSamePackageAsUnused>true</treatSamePackageAsUnused>
+					<directories>
+						<directory>${project.basedir}/src/main/java/cloud/cholewa/shelly/model</directory>
+					</directories>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>sort</goal>
+						</goals>
 					</execution>
 				</executions>
 			</plugin>
