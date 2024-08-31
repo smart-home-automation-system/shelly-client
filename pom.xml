@@ -9,6 +9,14 @@
 	<name>shelly-client</name>
 	<description>Client for Shelly devices</description>
 
+	<distributionManagement>
+		<repository>
+			<id>github</id>
+			<name>magikabdul</name>
+			<url>https://maven.pkg.github.com/smart-home-automation-system/shelly-client</url>
+		</repository>
+	</distributionManagement>
+
 	<properties>
 		<java.version>17</java.version>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
