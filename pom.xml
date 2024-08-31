@@ -24,6 +24,7 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<lombok.version>1.18.34</lombok.version>
+		<jackson-databind.version>2.17.2</jackson-databind.version>
 		<junit-jupiter.version>5.11.0</junit-jupiter.version>
 		<fasterxml-jackson.version>2.17.2</fasterxml-jackson.version>
 		<swagger-annotations.version>2.2.23</swagger-annotations.version>
@@ -177,15 +178,14 @@
 							<goal>generate</goal>
 						</goals>
 						<configuration>
-							<inputSpec>${project.basedir}/swagger/shelly.yaml</inputSpec>
 							<generatorName>java</generatorName>
+							<inputSpec>${project.basedir}/swagger/shelly.yaml</inputSpec>
+
 							<library>feign</library>
-							<modelPackage>cloud.cholewa.shelly.model</modelPackage>
+							<templateDirectory>${project.basedir}/swagger/templates</templateDirectory>
 							<output>${project.basedir}</output>
-							<generateApis>false</generateApis>
-							<generateSupportingFiles>false</generateSupportingFiles>
-							<generateModelTests>false</generateModelTests>
-							<generateModelDocumentation>false</generateModelDocumentation>
+							<modelPackage>cloud.cholewa.shelly.model</modelPackage>
+
 							<configOptions>
 								<hideGenerationTimestamp>true</hideGenerationTimestamp>
 								<useJakartaEe>true</useJakartaEe>
@@ -193,6 +193,14 @@
 								<useBeanValidation>true</useBeanValidation>
 								<configHelp>true</configHelp>
 							</configOptions>
+
+							<generateApis>false</generateApis>
+							<generateApiTests>false</generateApiTests>
+							<generateApiDocumentation>false</generateApiDocumentation>
+
+							<generateModelTests>false</generateModelTests>
+							<generateModelDocumentation>false</generateModelDocumentation>
+							<generateSupportingFiles>false</generateSupportingFiles>
 						</configuration>
 					</execution>
 				</executions>

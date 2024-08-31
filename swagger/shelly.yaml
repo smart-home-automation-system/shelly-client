@@ -8,12 +8,68 @@ tags:
   - name: Shelly
     description: IoT
 
-paths: {}
+paths: { }
 
 components:
   schemas:
-    Example:
+    ShellyUniStatusResponse:
       type: object
       properties:
-        name:
+        time:
           type: string
+          format: time
+        unixtime:
+          type: integer
+        wifi_sta:
+          $ref: '#/components/schemas/WifiStatus'
+        cloud:
+          $ref: '#/components/schemas/Cloud'
+        relays:
+          type: array
+          items:
+            $ref: '#/components/schemas/Relay'
+        ext_temperature:
+          $ref: '#/components/schemas/ExternalTemperature'
+    WifiStatus:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        ssid:
+          type: string
+        ip:
+          type: string
+        rssi:
+          type: integer
+    Cloud:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        connected:
+          type: boolean
+    Relay:
+      type: object
+      properties:
+        ison:
+          type: boolean
+        has_timer:
+          type: boolean
+        timer_started:
+          type: integer
+        timer_duration:
+          type: integer
+        timer_remaining:
+          type: integer
+        source:
+          type: string
+    ExternalTemperature:
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          hwID:
+            type: string
+          tC:
+            type: number
+            format: float
