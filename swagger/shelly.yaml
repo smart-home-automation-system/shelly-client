@@ -1,0 +1,19 @@
+openapi: 3.0.3
+info:
+  title: Shelly - IoT devices
+  description: Shelly
+  version: 1.0.0
+
+tags:
+  - name: Shelly
+    description: IoT
+
+paths: {}
+
+components:
+  schemas:
+    Example:
+      type: object
+      properties:
+        name:
+          type: string
