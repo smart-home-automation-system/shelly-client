@@ -12,64 +12,8 @@ paths: {}
 
 components:
   schemas:
-    weather:
+    Example:
       type: object
       properties:
-        type:
-          type: integer
-          format: int32
-          enum:
-            - 1
-            - 2
-            - 3
-          x-enum-descriptions:
-            - 'Blue sky'
-            - 'Slightly overcast'
-            - 'Take an umbrella with you'
-          x-enum-varnames:
-            - Sunny
-            - Cloudy
-            - Rainy
-    EatonControl:
-      type: object
-      properties:
-        control:
-          type: string
-          enum:
-            - 5A
-            - A5
-          x-enum-varnames:
-            - "SOX"
-            - "EOX"
-    PayloadType:
-      type: string
-      enum:
-        - "00"
-        - "01"
-        - "02"
-        - "03"
-        - "06"
-        - "10"
-      x-enum-varnames:
-        - TX
-        - CONFIG
-        - TX_EXT
-        - RX
-        - STATUS
-        - ERROR
-    ShellyRoller:
-      type: object
-      required:
-        - id
-      properties:
-        id:
-          type: string
         name:
           type: string
-          minimum: 3
-        email:
-          type: string
-          format: email
-        vendor:
-          type: string
-          pattern: "[A-Za-z]{5}"
