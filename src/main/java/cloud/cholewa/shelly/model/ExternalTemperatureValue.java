@@ -19,7 +19,7 @@ public class ExternalTemperatureValue {
     public static final String JSON_PROPERTY_HW_I_D = "hwID";
     private String hwID;
     public static final String JSON_PROPERTY_T_C = "tC";
-    private Float tC;
+    private Double tC;
 
     public ExternalTemperatureValue hwID(String hwID) {
 
@@ -41,7 +41,7 @@ public class ExternalTemperatureValue {
         this.hwID = hwID;
     }
 
-    public ExternalTemperatureValue tC(Float tC) {
+    public ExternalTemperatureValue tC(Double tC) {
 
         this.tC = tC;
         return this;
@@ -51,13 +51,13 @@ public class ExternalTemperatureValue {
 
     @JsonProperty(JSON_PROPERTY_T_C)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-    public Float gettC() {
+    public Double gettC() {
         return tC;
     }
 
     @JsonProperty(JSON_PROPERTY_T_C)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-    public void settC(Float tC) {
+    public void settC(Double tC) {
         this.tC = tC;
     }
 
