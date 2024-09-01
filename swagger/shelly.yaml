@@ -72,4 +72,4 @@ components:
             type: string
           tC:
             type: number
-            format: float
+            format: double
