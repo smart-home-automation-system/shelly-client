@@ -30,6 +30,15 @@ components:
             $ref: '#/components/schemas/Relay'
         ext_temperature:
           $ref: '#/components/schemas/ExternalTemperature'
+    ShellyProRelayResponse:
+      type: object
+      properties:
+        ison:
+          type: boolean
+        timer_duration:
+          type: integer
+        timer_remaining:
+          type: integer
     WifiStatus:
       type: object
       properties:
