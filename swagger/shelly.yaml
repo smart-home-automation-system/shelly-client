@@ -39,6 +39,21 @@ components:
           type: integer
         timer_remaining:
           type: integer
+    ShellyPro4StatusResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        source:
+          type: string
+        output:
+          type: boolean
+        apower:
+          type: integer
+        voltage:
+          type: integer
+        current:
+          type: integer
     WifiStatus:
       type: object
       properties:
