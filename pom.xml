@@ -18,6 +18,8 @@
 	</distributionManagement>
 
 	<properties>
+		<sonar.organization>smart-home-automation-system</sonar.organization>
+
 		<java.version>17</java.version>
 		<maven.compiler.source>${java.version}</maven.compiler.source>
 		<maven.compiler.target>${java.version}</maven.compiler.target>
