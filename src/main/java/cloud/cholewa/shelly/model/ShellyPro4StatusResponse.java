@@ -1,4 +1,3 @@
-
 package cloud.cholewa.shelly.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,13 +8,14 @@ import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@JsonPropertyOrder({ ShellyPro4StatusResponse.JSON_PROPERTY_ID, ShellyPro4StatusResponse.JSON_PROPERTY_SOURCE,
+@JsonPropertyOrder({ShellyPro4StatusResponse.JSON_PROPERTY_ID, ShellyPro4StatusResponse.JSON_PROPERTY_SOURCE,
         ShellyPro4StatusResponse.JSON_PROPERTY_OUTPUT, ShellyPro4StatusResponse.JSON_PROPERTY_APOWER,
-        ShellyPro4StatusResponse.JSON_PROPERTY_VOLTAGE, ShellyPro4StatusResponse.JSON_PROPERTY_CURRENT })
+        ShellyPro4StatusResponse.JSON_PROPERTY_VOLTAGE, ShellyPro4StatusResponse.JSON_PROPERTY_CURRENT})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
 @SuperBuilder
 public class ShellyPro4StatusResponse {
+
     public static final String JSON_PROPERTY_ID = "id";
     private Integer id;
     public static final String JSON_PROPERTY_SOURCE = "source";
@@ -30,13 +30,11 @@ public class ShellyPro4StatusResponse {
     private Integer current;
 
     public ShellyPro4StatusResponse id(Integer id) {
-
         this.id = id;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_ID)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Integer getId() {
@@ -50,13 +48,11 @@ public class ShellyPro4StatusResponse {
     }
 
     public ShellyPro4StatusResponse source(String source) {
-
         this.source = source;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_SOURCE)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public String getSource() {
@@ -70,13 +66,11 @@ public class ShellyPro4StatusResponse {
     }
 
     public ShellyPro4StatusResponse output(Boolean output) {
-
         this.output = output;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_OUTPUT)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Boolean getOutput() {
@@ -90,13 +84,11 @@ public class ShellyPro4StatusResponse {
     }
 
     public ShellyPro4StatusResponse apower(Integer apower) {
-
         this.apower = apower;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_APOWER)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Integer getApower() {
@@ -110,13 +102,11 @@ public class ShellyPro4StatusResponse {
     }
 
     public ShellyPro4StatusResponse voltage(Integer voltage) {
-
         this.voltage = voltage;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_VOLTAGE)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Integer getVoltage() {
@@ -130,13 +120,11 @@ public class ShellyPro4StatusResponse {
     }
 
     public ShellyPro4StatusResponse current(Integer current) {
-
         this.current = current;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_CURRENT)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Integer getCurrent() {
@@ -191,5 +179,4 @@ public class ShellyPro4StatusResponse {
         }
         return o.toString().replace("\n", "\n    ");
     }
-
 }
