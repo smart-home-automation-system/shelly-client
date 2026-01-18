@@ -25,14 +25,14 @@ jobs:
         run: mvn -B package --file pom.xml
 
       - name: Discord notification -> success
-        uses: sarisia/actions-status-discord@v1
+        uses: sarisia/actions-status-discord@b8381b25576cb341b2af39926ab42c5056cc44ed #v1.15.5
         if: ${{ success() }}
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}
           status: ${{ job.status }}
           title: "`CI` `shelly-library`"
       - name: Discord notification -> non success
-        uses: sarisia/actions-status-discord@v1
+        uses: sarisia/actions-status-discord@b8381b25576cb341b2af39926ab42c5056cc44ed #v1.15.5
         if: ${{ !success() }}
         with:
           webhook: ${{ secrets.DISCORD_WEBHOOK }}

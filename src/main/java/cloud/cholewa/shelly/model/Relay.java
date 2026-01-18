@@ -1,4 +1,3 @@
-
 package cloud.cholewa.shelly.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,12 +8,13 @@ import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@JsonPropertyOrder({ Relay.JSON_PROPERTY_ISON, Relay.JSON_PROPERTY_HAS_TIMER, Relay.JSON_PROPERTY_TIMER_STARTED,
-        Relay.JSON_PROPERTY_TIMER_DURATION, Relay.JSON_PROPERTY_TIMER_REMAINING, Relay.JSON_PROPERTY_SOURCE })
+@JsonPropertyOrder({Relay.JSON_PROPERTY_ISON, Relay.JSON_PROPERTY_HAS_TIMER, Relay.JSON_PROPERTY_TIMER_STARTED,
+        Relay.JSON_PROPERTY_TIMER_DURATION, Relay.JSON_PROPERTY_TIMER_REMAINING, Relay.JSON_PROPERTY_SOURCE})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
 @SuperBuilder
 public class Relay {
+
     public static final String JSON_PROPERTY_ISON = "ison";
     private Boolean ison;
     public static final String JSON_PROPERTY_HAS_TIMER = "has_timer";
@@ -29,13 +29,11 @@ public class Relay {
     private String source;
 
     public Relay ison(Boolean ison) {
-
         this.ison = ison;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_ISON)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Boolean getIson() {
@@ -49,13 +47,11 @@ public class Relay {
     }
 
     public Relay hasTimer(Boolean hasTimer) {
-
         this.hasTimer = hasTimer;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_HAS_TIMER)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Boolean getHasTimer() {
@@ -69,13 +65,11 @@ public class Relay {
     }
 
     public Relay timerStarted(Integer timerStarted) {
-
         this.timerStarted = timerStarted;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_TIMER_STARTED)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Integer getTimerStarted() {
@@ -89,13 +83,11 @@ public class Relay {
     }
 
     public Relay timerDuration(Integer timerDuration) {
-
         this.timerDuration = timerDuration;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_TIMER_DURATION)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Integer getTimerDuration() {
@@ -109,13 +101,11 @@ public class Relay {
     }
 
     public Relay timerRemaining(Integer timerRemaining) {
-
         this.timerRemaining = timerRemaining;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_TIMER_REMAINING)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Integer getTimerRemaining() {
@@ -129,13 +119,11 @@ public class Relay {
     }
 
     public Relay source(String source) {
-
         this.source = source;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_SOURCE)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public String getSource() {
@@ -189,5 +177,4 @@ public class Relay {
         }
         return o.toString().replace("\n", "\n    ");
     }
-
 }

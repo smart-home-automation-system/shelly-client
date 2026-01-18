@@ -1,4 +1,3 @@
-
 package cloud.cholewa.shelly.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,12 +8,13 @@ import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@JsonPropertyOrder({ WifiStatus.JSON_PROPERTY_CONNECTED, WifiStatus.JSON_PROPERTY_SSID, WifiStatus.JSON_PROPERTY_IP,
-        WifiStatus.JSON_PROPERTY_RSSI })
+@JsonPropertyOrder({WifiStatus.JSON_PROPERTY_CONNECTED, WifiStatus.JSON_PROPERTY_SSID, WifiStatus.JSON_PROPERTY_IP,
+        WifiStatus.JSON_PROPERTY_RSSI})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
 @SuperBuilder
 public class WifiStatus {
+
     public static final String JSON_PROPERTY_CONNECTED = "connected";
     private Boolean connected;
     public static final String JSON_PROPERTY_SSID = "ssid";
@@ -25,13 +25,11 @@ public class WifiStatus {
     private Integer rssi;
 
     public WifiStatus connected(Boolean connected) {
-
         this.connected = connected;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_CONNECTED)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Boolean getConnected() {
@@ -45,13 +43,11 @@ public class WifiStatus {
     }
 
     public WifiStatus ssid(String ssid) {
-
         this.ssid = ssid;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_SSID)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public String getSsid() {
@@ -65,13 +61,11 @@ public class WifiStatus {
     }
 
     public WifiStatus ip(String ip) {
-
         this.ip = ip;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_IP)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public String getIp() {
@@ -85,13 +79,11 @@ public class WifiStatus {
     }
 
     public WifiStatus rssi(Integer rssi) {
-
         this.rssi = rssi;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_RSSI)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Integer getRssi() {
@@ -140,5 +132,4 @@ public class WifiStatus {
         }
         return o.toString().replace("\n", "\n    ");
     }
-
 }

@@ -1,4 +1,3 @@
-
 package cloud.cholewa.shelly.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -14,13 +13,14 @@ import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@JsonPropertyOrder({ ShellyUniStatusResponse.JSON_PROPERTY_TIME, ShellyUniStatusResponse.JSON_PROPERTY_UNIXTIME,
+@JsonPropertyOrder({ShellyUniStatusResponse.JSON_PROPERTY_TIME, ShellyUniStatusResponse.JSON_PROPERTY_UNIXTIME,
         ShellyUniStatusResponse.JSON_PROPERTY_WIFI_STA, ShellyUniStatusResponse.JSON_PROPERTY_CLOUD,
-        ShellyUniStatusResponse.JSON_PROPERTY_RELAYS, ShellyUniStatusResponse.JSON_PROPERTY_EXT_TEMPERATURE })
+        ShellyUniStatusResponse.JSON_PROPERTY_RELAYS, ShellyUniStatusResponse.JSON_PROPERTY_EXT_TEMPERATURE})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
 @SuperBuilder
 public class ShellyUniStatusResponse {
+
     public static final String JSON_PROPERTY_TIME = "time";
     private String time;
     public static final String JSON_PROPERTY_UNIXTIME = "unixtime";
@@ -35,13 +35,11 @@ public class ShellyUniStatusResponse {
     private Map<String, ExternalTemperatureValue> extTemperature = new HashMap<>();
 
     public ShellyUniStatusResponse time(String time) {
-
         this.time = time;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_TIME)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public String getTime() {
@@ -55,13 +53,11 @@ public class ShellyUniStatusResponse {
     }
 
     public ShellyUniStatusResponse unixtime(Integer unixtime) {
-
         this.unixtime = unixtime;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_UNIXTIME)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Integer getUnixtime() {
@@ -75,14 +71,12 @@ public class ShellyUniStatusResponse {
     }
 
     public ShellyUniStatusResponse wifiSta(WifiStatus wifiSta) {
-
         this.wifiSta = wifiSta;
         return this;
     }
 
     @Nullable
     @Valid
-
     @JsonProperty(JSON_PROPERTY_WIFI_STA)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public WifiStatus getWifiSta() {
@@ -96,14 +90,12 @@ public class ShellyUniStatusResponse {
     }
 
     public ShellyUniStatusResponse cloud(Cloud cloud) {
-
         this.cloud = cloud;
         return this;
     }
 
     @Nullable
     @Valid
-
     @JsonProperty(JSON_PROPERTY_CLOUD)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Cloud getCloud() {
@@ -117,7 +109,6 @@ public class ShellyUniStatusResponse {
     }
 
     public ShellyUniStatusResponse relays(List<@Valid Relay> relays) {
-
         this.relays = relays;
         return this;
     }
@@ -132,7 +123,6 @@ public class ShellyUniStatusResponse {
 
     @Nullable
     @Valid
-
     @JsonProperty(JSON_PROPERTY_RELAYS)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public List<@Valid Relay> getRelays() {
@@ -146,7 +136,6 @@ public class ShellyUniStatusResponse {
     }
 
     public ShellyUniStatusResponse extTemperature(Map<String, ExternalTemperatureValue> extTemperature) {
-
         this.extTemperature = extTemperature;
         return this;
     }
@@ -161,7 +150,6 @@ public class ShellyUniStatusResponse {
 
     @Nullable
     @Valid
-
     @JsonProperty(JSON_PROPERTY_EXT_TEMPERATURE)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Map<String, ExternalTemperatureValue> getExtTemperature() {
@@ -216,5 +204,4 @@ public class ShellyUniStatusResponse {
         }
         return o.toString().replace("\n", "\n    ");
     }
-
 }

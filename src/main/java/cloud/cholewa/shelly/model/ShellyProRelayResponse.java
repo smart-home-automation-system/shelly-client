@@ -1,4 +1,3 @@
-
 package cloud.cholewa.shelly.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,12 +8,13 @@ import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@JsonPropertyOrder({ ShellyProRelayResponse.JSON_PROPERTY_ISON, ShellyProRelayResponse.JSON_PROPERTY_TIMER_DURATION,
-        ShellyProRelayResponse.JSON_PROPERTY_TIMER_REMAINING })
+@JsonPropertyOrder({ShellyProRelayResponse.JSON_PROPERTY_ISON, ShellyProRelayResponse.JSON_PROPERTY_TIMER_DURATION,
+        ShellyProRelayResponse.JSON_PROPERTY_TIMER_REMAINING})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
 @SuperBuilder
 public class ShellyProRelayResponse {
+
     public static final String JSON_PROPERTY_ISON = "ison";
     private Boolean ison;
     public static final String JSON_PROPERTY_TIMER_DURATION = "timer_duration";
@@ -23,13 +23,11 @@ public class ShellyProRelayResponse {
     private Integer timerRemaining;
 
     public ShellyProRelayResponse ison(Boolean ison) {
-
         this.ison = ison;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_ISON)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Boolean getIson() {
@@ -43,13 +41,11 @@ public class ShellyProRelayResponse {
     }
 
     public ShellyProRelayResponse timerDuration(Integer timerDuration) {
-
         this.timerDuration = timerDuration;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_TIMER_DURATION)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Integer getTimerDuration() {
@@ -63,13 +59,11 @@ public class ShellyProRelayResponse {
     }
 
     public ShellyProRelayResponse timerRemaining(Integer timerRemaining) {
-
         this.timerRemaining = timerRemaining;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_TIMER_REMAINING)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Integer getTimerRemaining() {
@@ -118,5 +112,4 @@ public class ShellyProRelayResponse {
         }
         return o.toString().replace("\n", "\n    ");
     }
-
 }

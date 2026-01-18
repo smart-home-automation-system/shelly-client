@@ -1,4 +1,3 @@
-
 package cloud.cholewa.shelly.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -9,24 +8,23 @@ import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@JsonPropertyOrder({ Cloud.JSON_PROPERTY_ENABLED, Cloud.JSON_PROPERTY_CONNECTED })
+@JsonPropertyOrder({Cloud.JSON_PROPERTY_ENABLED, Cloud.JSON_PROPERTY_CONNECTED})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
 @SuperBuilder
 public class Cloud {
+
     public static final String JSON_PROPERTY_ENABLED = "enabled";
     private Boolean enabled;
     public static final String JSON_PROPERTY_CONNECTED = "connected";
     private Boolean connected;
 
     public Cloud enabled(Boolean enabled) {
-
         this.enabled = enabled;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_ENABLED)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Boolean getEnabled() {
@@ -40,13 +38,11 @@ public class Cloud {
     }
 
     public Cloud connected(Boolean connected) {
-
         this.connected = connected;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_CONNECTED)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Boolean getConnected() {
@@ -92,5 +88,4 @@ public class Cloud {
         }
         return o.toString().replace("\n", "\n    ");
     }
-
 }

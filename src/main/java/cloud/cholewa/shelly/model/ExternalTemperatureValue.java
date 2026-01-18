@@ -1,4 +1,3 @@
-
 package cloud.cholewa.shelly.model;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
@@ -10,25 +9,24 @@ import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@JsonPropertyOrder({ ExternalTemperatureValue.JSON_PROPERTY_HW_I_D, ExternalTemperatureValue.JSON_PROPERTY_T_C })
+@JsonPropertyOrder({ExternalTemperatureValue.JSON_PROPERTY_HW_I_D, ExternalTemperatureValue.JSON_PROPERTY_T_C})
 @JsonTypeName("ExternalTemperature_value")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
 @SuperBuilder
 public class ExternalTemperatureValue {
+
     public static final String JSON_PROPERTY_HW_I_D = "hwID";
     private String hwID;
     public static final String JSON_PROPERTY_T_C = "tC";
     private Double tC;
 
     public ExternalTemperatureValue hwID(String hwID) {
-
         this.hwID = hwID;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_HW_I_D)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public String getHwID() {
@@ -42,13 +40,11 @@ public class ExternalTemperatureValue {
     }
 
     public ExternalTemperatureValue tC(Double tC) {
-
         this.tC = tC;
         return this;
     }
 
     @Nullable
-
     @JsonProperty(JSON_PROPERTY_T_C)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
     public Double gettC() {
@@ -95,5 +91,4 @@ public class ExternalTemperatureValue {
         }
         return o.toString().replace("\n", "\n    ");
     }
-
 }
