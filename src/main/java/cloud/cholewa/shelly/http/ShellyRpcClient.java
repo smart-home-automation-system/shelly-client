@@ -10,10 +10,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.MediaType;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
 /**
  * The RPC of a Gen2+ device over HTTP: {@code POST /rpc/<Method>} with the parameters as JSON.
@@ -21,8 +23,8 @@ import reactor.core.publisher.Mono;
  * Every method takes the address of the device - a host or {@code host:port}, as the device
  * registry holds it - and, for a component, its id (the channel). A call ends with the answer
  * or with a {@link ShellyCallException}; a refusal the device explained is a
- * {@link ShellyRpcException}. Nothing is retried: a command sent twice is the caller's
- * decision.
+ * {@link ShellyRpcException}, and an address that is none a {@link ShellyAddressException}.
+ * Nothing is retried: a command sent twice is the caller's decision.
  */
 public class ShellyRpcClient {
 
@@ -32,7 +34,17 @@ public class ShellyRpcClient {
     private final ShellyHttp http;
 
     public ShellyRpcClient(WebClient.Builder builder, ShellyTimeouts timeouts) {
-        this.http = new ShellyHttp(builder, timeouts);
+        this(builder, timeouts, UnaryOperator.identity());
+    }
+
+    /**
+     * @param customizer
+     *            what the consumer wants on the HTTP client of the calls - its request log.
+     *            The timeouts are set after it.
+     */
+    public ShellyRpcClient(WebClient.Builder builder, ShellyTimeouts timeouts,
+            UnaryOperator<HttpClient> customizer) {
+        this.http = new ShellyHttp(builder, timeouts, customizer);
     }
 
     public Mono<Void> coverOpen(String address, int id) {
@@ -163,35 +175,27 @@ public class ShellyRpcClient {
     }
 
     private Mono<Void> command(String address, String method, Map<String, Object> params) {
-        String call = method + " on " + address;
-        return Mono.defer(() -> request(address, method, params).exchangeToMono(response -> http.done(response, call)))
-            .transform(result -> http.bounded(result, call));
+        return http.command(address, method, device -> request(device, method, params));
     }
 
     private <T> Mono<T> read(String address, String method, Map<String, Object> params, Class<T> model,
             Predicate<T> isAnswer) {
-        String call = method + " on " + address;
-        return Mono
-            .defer(() -> request(address, method, params)
-                .exchangeToMono(response -> http.body(response, response.bodyToMono(model), call)))
-            .transform(result -> http.answer(result, isAnswer, call));
+        return http.read(address, method, device -> request(device, method, params),
+            ParameterizedTypeReference.forType(model), isAnswer);
     }
 
     private Mono<Map<String, Object>> components(String address, String method,
             Predicate<Map<String, Object>> isAnswer) {
-        String call = method + " on " + address;
-        return Mono
-            .defer(() -> request(address, method, Map.of())
-                .exchangeToMono(response -> http.body(response, response.bodyToMono(COMPONENTS), call)))
-            .transform(result -> http.answer(result, isAnswer, call));
+        return http.read(address, method, device -> request(device, method, Map.of()), COMPONENTS, isAnswer);
     }
 
     // Always a body, "{}" when there is no parameter: a device refuses a POST without a
     // Content-Length. And a POST, not a GET with a query: a list (rgb) has no form in a query
     // that every firmware reads.
-    private WebClient.RequestHeadersSpec<?> request(String address, String method, Map<String, Object> params) {
-        return http.client().post().uri(ShellyHttp.uri(address, "/rpc/" + method, Map.of()))
-            .contentType(MediaType.APPLICATION_JSON).bodyValue(params);
+    private WebClient.RequestHeadersSpec<?> request(ShellyHttp.Target device, String method,
+            Map<String, Object> params) {
+        return http.client().post().uri(device.uri("/rpc/" + method, Map.of())).contentType(MediaType.APPLICATION_JSON)
+            .bodyValue(params);
     }
 
     private static Map<String, Object> params(int id) {

@@ -151,6 +151,14 @@ class ShellyMqttDecoderTest {
             });
     }
 
+    // the topic says channel 1 and the body channel 0: handed on, a consumer would switch
+    // its picture of the wrong channel
+    @Test
+    void shouldRefuseAStatusOfAnotherChannelThanItsTopic() {
+        assertThatThrownBy(() -> sut.decode("shellypro4pm-a1b2c3d4e5f6.status.switch:1", sample("gen2/switch-status.json")))
+            .isInstanceOf(ShellyDecodeException.class).hasMessageContaining("switch:1");
+    }
+
     @Test
     void shouldRefuseAStatusWithoutABody() {
         assertThatThrownBy(() -> sut.decode(DEVICE + ".status.switch:0", null))
@@ -201,14 +209,17 @@ class ShellyMqttDecoderTest {
 
     @Test
     void shouldSkipANotificationOfAMethodItHasNoModelFor() {
-        byte[] frame = "{\"src\":\"x\",\"method\":\"NotifySomethingNew\",\"params\":{}}".getBytes(StandardCharsets.UTF_8);
+        byte[] frame = "{\"src\":\"x\",\"method\":\"NotifySomethingNew\"}".getBytes(StandardCharsets.UTF_8);
 
         assertThat(sut.decode(DEVICE + ".events.rpc", frame)).isEmpty();
     }
 
     @ParameterizedTest
     @ValueSource(strings = { "", "{}", "null", "[]", "not json", "{\"method\":7}", "{\"method\":null}",
-        "{\"method\":\"NotifyEvent\",\"params\":[]}" })
+        "{\"method\":\"NotifyEvent\",\"params\":[]}",
+        // a frame without its params would decode into a model with nothing, or a null, in it
+        "{\"method\":\"NotifyStatus\"}", "{\"method\":\"NotifyEvent\"}", "{\"method\":\"NotifyEvent\",\"params\":null}",
+        "{\"method\":\"NotifyFullStatus\",\"params\":\"x\"}" })
     void shouldRefuseABodyThatIsNotANotification(String body) {
         assertThatThrownBy(() -> sut.decode(DEVICE + ".events.rpc", body.getBytes(StandardCharsets.UTF_8)))
             .isInstanceOf(ShellyDecodeException.class).hasMessageContaining(DEVICE);

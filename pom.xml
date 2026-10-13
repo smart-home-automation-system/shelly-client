@@ -79,10 +79,11 @@
 			<artifactId>jakarta.validation-api</artifactId>
 		</dependency>
 
-		<!-- what the clients and the decoder need - provided: the consumer brings it, and a
-		     consumer that only wants the models gets none of it. The clients (http) need
+		<!-- what the clients and the decoder need - provided: the consumer brings it, and
+		     nothing of it reaches a consumer through this library. The clients (http) need
 		     WebFlux and Reactor Netty, the decoder (codec) Jackson 3, the auto-configuration
-		     Spring Boot; it registers each part only when its classes are there -->
+		     Spring Boot; it registers each part only where its classes and its one bean are -
+		     which, in a WebFlux service of this organization, is everywhere -->
 		<dependency>
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-webflux</artifactId>
@@ -127,10 +128,16 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-		<!-- the real WebClientAutoConfiguration, for the test of the order of the auto-configurations -->
+		<!-- the real WebClientAutoConfiguration and JacksonAutoConfiguration, for the test of
+		     the order of the auto-configurations: they are named there by their class names -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-webclient</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-jackson</artifactId>
 			<scope>test</scope>
 		</dependency>
 		<dependency>

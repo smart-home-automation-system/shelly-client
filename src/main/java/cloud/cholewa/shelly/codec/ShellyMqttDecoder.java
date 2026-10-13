@@ -37,11 +37,12 @@ public class ShellyMqttDecoder {
 
     private record Model<T>(Class<T> type, Function<T, Integer> id) {
 
-        // every status carries the id of its component: JSON without it is JSON of something
-        // else, which would otherwise decode into a model of nulls
-        Object read(JsonMapper mapper, byte[] body) {
+        // Every status carries the id of its component, and it is the id of the topic: JSON
+        // without it is JSON of something else, which would otherwise decode into a model of
+        // nulls, and JSON with another id is the status of another channel
+        Object read(JsonMapper mapper, byte[] body, int index) {
             T status = mapper.readValue(body, type);
-            return status != null && id.apply(status) != null ? status : null;
+            return status != null && Integer.valueOf(index).equals(id.apply(status)) ? status : null;
         }
     }
 
@@ -123,12 +124,12 @@ public class ShellyMqttDecoder {
         String what = "the status of " + topic.component() + ":" + topic.index() + " of " + topic.deviceId();
         Object status;
         try {
-            status = model.read(mapper, body == null ? new byte[0] : body);
+            status = model.read(mapper, body == null ? new byte[0] : body, topic.index());
         } catch (JacksonException notTheModel) {
             throw new ShellyDecodeException("Not " + what, notTheModel);
         }
         if (status == null) {
-            throw new ShellyDecodeException("Not " + what + ": no id of a component in it");
+            throw new ShellyDecodeException("Not " + what + ": the id of that component is not in it");
         }
         return Optional.of(new ShellyEvent.Status(topic.deviceId(), topic.component(), topic.index(), status));
     }
@@ -146,6 +147,12 @@ public class ShellyMqttDecoder {
             Class<?> model = NOTIFICATIONS.get(method.stringValue());
             if (model == null) {
                 return Optional.empty();
+            }
+            // params is what a notification is for: a frame without it would decode into a
+            // model with nothing in it, or with a null where a reader expects the events
+            JsonNode params = frame.get("params");
+            if (params == null || !params.isObject()) {
+                throw new ShellyDecodeException("Not " + what + ": no params in it");
             }
             return Optional
                 .of(new ShellyEvent.Notification(topic.deviceId(), method.stringValue(), mapper.treeToValue(frame, model)));

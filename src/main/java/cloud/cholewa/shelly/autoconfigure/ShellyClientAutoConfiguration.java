@@ -2,13 +2,16 @@ package cloud.cholewa.shelly.autoconfigure;
 
 import cloud.cholewa.shelly.codec.ShellyMqttDecoder;
 import cloud.cholewa.shelly.http.ShellyGen1Client;
+import cloud.cholewa.shelly.http.ShellyHttpClientCustomizer;
 import cloud.cholewa.shelly.http.ShellyRpcClient;
 import cloud.cholewa.shelly.http.ShellyTimeouts;
+import java.util.function.UnaryOperator;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnSingleCandidate;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,11 +25,14 @@ import tools.jackson.databind.json.JsonMapper;
  * that type itself:
  * <ul>
  * <li>{@link ShellyRpcClient} and {@link ShellyGen1Client}, on the {@code WebClient.Builder}
- * of the application - so with WebFlux, Reactor Netty and a builder bean;</li>
+ * of the application - so with WebFlux, Reactor Netty and one builder to take (the only one,
+ * or the primary), with every {@link ShellyHttpClientCustomizer} of the application;</li>
  * <li>{@link ShellyMqttDecoder}, on the {@code JsonMapper} of the application - so with
- * Jackson 3 and a mapper bean.</li>
+ * Jackson 3 and one mapper to take.</li>
  * </ul>
- * {@code shelly.client.enabled: false} switches all of it off.
+ * A WebFlux service of this organization has all of that, so it gets all three beans by
+ * taking the library - used or not. They call nobody by themselves;
+ * {@code shelly.client.enabled: false} keeps them out.
  */
 @AutoConfiguration(afterName = {
     "org.springframework.boot.webclient.autoconfigure.WebClientAutoConfiguration",
@@ -37,7 +43,7 @@ public class ShellyClientAutoConfiguration {
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass({ WebClient.class, HttpClient.class })
-    @ConditionalOnBean(WebClient.Builder.class)
+    @ConditionalOnSingleCandidate(WebClient.Builder.class)
     static class Clients {
 
         // a bean of its own, so that a timeout outside its bounds stops the start and says
@@ -50,20 +56,33 @@ public class ShellyClientAutoConfiguration {
 
         @Bean
         @ConditionalOnMissingBean
-        ShellyRpcClient shellyRpcClient(WebClient.Builder builder, ShellyTimeouts timeouts) {
-            return new ShellyRpcClient(builder, timeouts);
+        ShellyRpcClient shellyRpcClient(WebClient.Builder builder, ShellyTimeouts timeouts,
+                ObjectProvider<ShellyHttpClientCustomizer> customizers) {
+            return new ShellyRpcClient(builder, timeouts, all(customizers));
         }
 
         @Bean
         @ConditionalOnMissingBean
-        ShellyGen1Client shellyGen1Client(WebClient.Builder builder, ShellyTimeouts timeouts) {
-            return new ShellyGen1Client(builder, timeouts);
+        ShellyGen1Client shellyGen1Client(WebClient.Builder builder, ShellyTimeouts timeouts,
+                ObjectProvider<ShellyHttpClientCustomizer> customizers) {
+            return new ShellyGen1Client(builder, timeouts, all(customizers));
+        }
+
+        // every customizer of the application, in its order - none is the usual case
+        private static UnaryOperator<HttpClient> all(ObjectProvider<ShellyHttpClientCustomizer> customizers) {
+            return http -> {
+                HttpClient customized = http;
+                for (ShellyHttpClientCustomizer customizer : customizers.orderedStream().toList()) {
+                    customized = customizer.apply(customized);
+                }
+                return customized;
+            };
         }
     }
 
     @Configuration(proxyBeanMethods = false)
     @ConditionalOnClass(JsonMapper.class)
-    @ConditionalOnBean(JsonMapper.class)
+    @ConditionalOnSingleCandidate(JsonMapper.class)
     static class Codec {
 
         @Bean

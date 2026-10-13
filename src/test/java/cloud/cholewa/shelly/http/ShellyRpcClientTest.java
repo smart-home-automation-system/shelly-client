@@ -280,22 +280,52 @@ class ShellyRpcClientTest {
     }
 
     // The address comes from a registry somebody types into: it is a host, with a port or
-    // without, and nothing that could lead the call elsewhere.
+    // without, and nothing that could lead the call elsewhere. A mistake of the registry is
+    // told apart from a device that is down, and what was typed is not repeated - it is no
+    // address, so it may be a password in front of an @.
     @ParameterizedTest
-    @ValueSource(strings = { "", " ", "192.0.2.7/rpc/Shelly.Reboot?", "192.0.2.7#", "http://192.0.2.7", "user@192.0.2.7",
-        "192.0.2.7:", "192.0.2.7:port", "192.0.2.7 ", "a b", "192.0.2.7?x=1", "[::1]", "-host", "host-" })
+    @ValueSource(strings = { "", " ", "192.0.2.7/rpc/Shelly.Reboot?", "192.0.2.7#", "http://192.0.2.7",
+        "admin:secret@192.0.2.7", "192.0.2.7:", "192.0.2.7:port", "192.0.2.7 ", "a b", "192.0.2.7?x=1", "[::1]",
+        "-host", "host-" })
     void shouldRefuseAnAddressThatIsNotAHost(String address) {
-        sut.coverOpen(address, 0).as(StepVerifier::create)
-            .expectErrorSatisfies(failure -> assertThat(failure).isExactlyInstanceOf(ShellyCallException.class)
-                .hasCauseInstanceOf(IllegalArgumentException.class))
-            .verify();
+        sut.coverOpen(address, 0).as(StepVerifier::create).expectErrorSatisfies(failure -> {
+            assertThat(failure).isExactlyInstanceOf(ShellyAddressException.class)
+                .hasMessage("Cover.Open: not the address of a device (a host, or host:port)");
+            assertThat(((ShellyCallException) failure).httpStatus()).isNull();
+        }).verify();
 
         assertThat(device.calls()).isZero();
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = { "192.0.2.7:0", "192.0.2.7:65536", "192.0.2.7:99999" })
+    void shouldRefuseAPortNoDeviceListensOn(String address) {
+        sut.coverStatus(address, 0).as(StepVerifier::create)
+            .expectErrorSatisfies(failure -> assertThat(failure).isExactlyInstanceOf(ShellyAddressException.class)
+                .hasMessageContaining("not a port of a device"))
+            .verify();
+    }
+
     @Test
     void shouldRefuseAMissingAddress() {
-        sut.coverStatus(null, 0).as(StepVerifier::create).expectError(ShellyCallException.class).verify();
+        sut.coverStatus(null, 0).as(StepVerifier::create).expectError(ShellyAddressException.class).verify();
+    }
+
+    // What a service wants on the HTTP client of the calls - its request log - reaches the
+    // device calls through the customizer; the timeouts are set after it and stay.
+    @Test
+    void shouldApplyTheCustomizerOfTheConsumerAndKeepTheTimeouts() {
+        ShellyRpcClient customized = new ShellyRpcClient(WebClient.builder(), DeviceStub.TIMEOUTS,
+            http -> http.headers(headers -> headers.set("X-Logged-By", "the-service"))
+                .responseTimeout(java.time.Duration.ofMinutes(10)));
+
+        device.answersJson("null");
+        customized.coverOpen(device.address(), 0).as(StepVerifier::create).verifyComplete();
+        assertThat(device.asked().getHeaders().get("X-Logged-By")).isEqualTo("the-service");
+
+        device.answersLate("null");
+        customized.coverOpen(device.address(), 0).as(StepVerifier::create).expectError(ShellyCallException.class)
+            .verify(java.time.Duration.ofSeconds(5));
     }
 
     // nothing happens before somebody subscribes, and every subscription is a call of its own
@@ -337,7 +367,7 @@ class ShellyRpcClientTest {
         assertThat(DeviceStub.TIMEOUTS.call()).isEqualTo(java.time.Duration.ofSeconds(2));
 
         Mono<CoverStatus> never = Mono.never();
-        new ShellyHttp(WebClient.builder(), DeviceStub.TIMEOUTS).answer(never, cover -> true, "Cover.GetStatus on x")
+        new ShellyHttp(WebClient.builder(), DeviceStub.TIMEOUTS, http -> http).bounded(never, "Cover.GetStatus on x")
             .as(StepVerifier::create)
             .expectErrorSatisfies(failure -> assertThat(failure).isExactlyInstanceOf(ShellyCallException.class)
                 .hasCauseInstanceOf(TimeoutException.class))

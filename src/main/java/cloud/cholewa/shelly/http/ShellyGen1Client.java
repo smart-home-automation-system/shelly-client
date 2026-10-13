@@ -8,9 +8,12 @@ import cloud.cholewa.shelly.model.RollerStatus;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
+import reactor.netty.http.client.HttpClient;
 
 /**
  * The HTTP API of a Gen1 device: a {@code GET} per call, the command in the query.
@@ -19,7 +22,8 @@ import reactor.core.publisher.Mono;
  * registry holds it - and the index of the roller, light or relay. A command answers with the
  * status of what it commanded, as the device gives it right after: for a roller that is the
  * start of the movement, not its end. A call ends with that answer or with a
- * {@link ShellyCallException}. Nothing is retried.
+ * {@link ShellyCallException} - a {@link ShellyAddressException} for an address that is none.
+ * Nothing is retried.
  */
 public class ShellyGen1Client {
 
@@ -41,7 +45,17 @@ public class ShellyGen1Client {
     private final ShellyHttp http;
 
     public ShellyGen1Client(WebClient.Builder builder, ShellyTimeouts timeouts) {
-        this.http = new ShellyHttp(builder, timeouts);
+        this(builder, timeouts, UnaryOperator.identity());
+    }
+
+    /**
+     * @param customizer
+     *            what the consumer wants on the HTTP client of the calls - its request log.
+     *            The timeouts are set after it.
+     */
+    public ShellyGen1Client(WebClient.Builder builder, ShellyTimeouts timeouts,
+            UnaryOperator<HttpClient> customizer) {
+        this.http = new ShellyHttp(builder, timeouts, customizer);
     }
 
     /**
@@ -133,11 +147,8 @@ public class ShellyGen1Client {
 
     private <T> Mono<T> get(String address, String path, Map<String, ?> query, Class<T> model,
             Predicate<T> isAnswer) {
-        String call = "GET " + path + sent(query) + " on " + address;
-        return Mono
-            .defer(() -> http.client().get().uri(ShellyHttp.uri(address, path, query))
-                .exchangeToMono(response -> http.body(response, response.bodyToMono(model), call)))
-            .transform(result -> http.answer(result, isAnswer, call));
+        return http.read(address, "GET " + path + sent(query), device -> http.client().get().uri(device.uri(path, query)),
+            ParameterizedTypeReference.forType(model), isAnswer);
     }
 
     // the query as it is sent, for the message of a failure: what was left null is not in it

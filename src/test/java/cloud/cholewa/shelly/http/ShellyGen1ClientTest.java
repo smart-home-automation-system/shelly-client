@@ -237,8 +237,8 @@ class ShellyGen1ClientTest {
     @ValueSource(strings = { "", "192.0.2.7/relay/1?turn=on&", "http://192.0.2.7", "192.0.2.7?turn=on" })
     void shouldRefuseAnAddressThatIsNotAHost(String address) {
         sut.relay(address, 0, false).as(StepVerifier::create)
-            .expectErrorSatisfies(failure -> assertThat(failure).isExactlyInstanceOf(ShellyCallException.class)
-                .hasCauseInstanceOf(IllegalArgumentException.class))
+            .expectErrorSatisfies(failure -> assertThat(failure).isExactlyInstanceOf(ShellyAddressException.class)
+                .hasMessage("GET /relay/0?turn=off: not the address of a device (a host, or host:port)"))
             .verify();
 
         assertThat(device.calls()).isZero();

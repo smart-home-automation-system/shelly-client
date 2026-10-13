@@ -4,13 +4,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import cloud.cholewa.shelly.codec.ShellyMqttDecoder;
 import cloud.cholewa.shelly.http.ShellyGen1Client;
+import cloud.cholewa.shelly.http.ShellyHttpClientCustomizer;
 import cloud.cholewa.shelly.http.ShellyRpcClient;
 import cloud.cholewa.shelly.http.ShellyTimeouts;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.boot.autoconfigure.AutoConfigurations;
+import org.springframework.boot.jackson.autoconfigure.JacksonAutoConfiguration;
 import org.springframework.boot.test.context.FilteredClassLoader;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.boot.webclient.autoconfigure.WebClientAutoConfiguration;
@@ -22,11 +25,13 @@ import tools.jackson.databind.json.JsonMapper;
 
 class ShellyClientAutoConfigurationTest {
 
-    // an application with WebFlux and Jackson: the builder comes from Spring Boot's own
-    // auto-configuration, which this one has to come after
-    private final ApplicationContextRunner application = new ApplicationContextRunner()
-        .withConfiguration(AutoConfigurations.of(ShellyClientAutoConfiguration.class, WebClientAutoConfiguration.class))
-        .withUserConfiguration(MapperOfTheApplication.class);
+    // An application with WebFlux and Jackson - what every WebFlux service of the
+    // organization is. The builder and the mapper come from Spring Boot's own
+    // auto-configurations, which this one names by their class names to come after: with the
+    // real ones here, a name that no longer exists shows as a missing bean.
+    private final ApplicationContextRunner application = new ApplicationContextRunner().withConfiguration(
+        AutoConfigurations.of(ShellyClientAutoConfiguration.class, WebClientAutoConfiguration.class,
+            JacksonAutoConfiguration.class));
 
     @Test
     void shouldRegisterTheClientsAndTheDecoderWithTheDefaultTimeouts() {
@@ -63,8 +68,8 @@ class ShellyClientAutoConfigurationTest {
                 .doesNotHaveBean(ShellyMqttDecoder.class));
     }
 
-    // a consumer that wants the models alone - the four services that had the library before
-    // the clients - has no WebFlux here or no builder, and gets no client and no failure
+    // An application without WebFlux - none of the organization's is one today: no client
+    // and no failure. A WebFlux service that wants the models alone switches the library off.
     @Test
     void shouldRegisterNoClientWithoutWebFlux() {
         application.withClassLoader(new FilteredClassLoader(WebClient.class))
@@ -81,8 +86,8 @@ class ShellyClientAutoConfigurationTest {
 
     @Test
     void shouldRegisterNoClientWithoutABuilder() {
-        new ApplicationContextRunner().withConfiguration(AutoConfigurations.of(ShellyClientAutoConfiguration.class))
-            .withUserConfiguration(MapperOfTheApplication.class)
+        new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(ShellyClientAutoConfiguration.class, JacksonAutoConfiguration.class))
             .run(context -> assertThat(context).hasNotFailed().doesNotHaveBean(ShellyRpcClient.class)
                 .doesNotHaveBean(ShellyTimeouts.class).hasSingleBean(ShellyMqttDecoder.class));
     }
@@ -100,6 +105,31 @@ class ShellyClientAutoConfigurationTest {
             .withConfiguration(AutoConfigurations.of(ShellyClientAutoConfiguration.class, WebClientAutoConfiguration.class))
             .run(context -> assertThat(context).hasNotFailed().doesNotHaveBean(ShellyMqttDecoder.class)
                 .hasSingleBean(ShellyRpcClient.class));
+    }
+
+    // A second mapper or builder of the application, none of them primary: there is no one
+    // to take, so that part is left out - the application still starts. With a primary there is.
+    @Test
+    void shouldLeaveAPartOutWhenThereIsNoOneBeanToBuildItOn() {
+        application.withUserConfiguration(TwoMappers.class, TwoBuilders.class)
+            .run(context -> assertThat(context).hasNotFailed().doesNotHaveBean(ShellyMqttDecoder.class)
+                .doesNotHaveBean(ShellyRpcClient.class).doesNotHaveBean(ShellyGen1Client.class));
+    }
+
+    @Test
+    void shouldTakeThePrimaryOfSeveralMappers() {
+        application.withUserConfiguration(SecondMapper.class).run(
+            context -> assertThat(context).hasNotFailed().hasSingleBean(ShellyMqttDecoder.class));
+    }
+
+    // the request log of the service: every customizer of the application, on both clients
+    @Test
+    void shouldGiveTheClientsTheCustomizersOfTheApplication() {
+        application.withUserConfiguration(CustomizerOfTheApplication.class).run(context -> {
+            assertThat(context).hasNotFailed().hasSingleBean(ShellyRpcClient.class)
+                .hasSingleBean(ShellyGen1Client.class);
+            assertThat(CustomizerOfTheApplication.APPLIED).hasValue(2);
+        });
     }
 
     // what the service declares itself wins - other timeouts for the clients, a client of its own
@@ -125,11 +155,54 @@ class ShellyClientAutoConfigurationTest {
     }
 
     @Configuration(proxyBeanMethods = false)
-    static class MapperOfTheApplication {
+    static class TwoMappers {
 
         @Bean
-        JsonMapper jsonMapper() {
+        JsonMapper strictMapper() {
             return JsonMapper.builder().build();
+        }
+
+        @Bean
+        JsonMapper lenientMapper() {
+            return JsonMapper.builder().build();
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    static class TwoBuilders {
+
+        @Bean
+        WebClient.Builder oneBuilder() {
+            return WebClient.builder();
+        }
+
+        @Bean
+        WebClient.Builder anotherBuilder() {
+            return WebClient.builder();
+        }
+    }
+
+    // next to the mapper of Spring Boot, which is the primary one
+    @Configuration(proxyBeanMethods = false)
+    static class SecondMapper {
+
+        @Bean
+        JsonMapper lenientMapper() {
+            return JsonMapper.builder().build();
+        }
+    }
+
+    @Configuration(proxyBeanMethods = false)
+    static class CustomizerOfTheApplication {
+
+        static final AtomicInteger APPLIED = new AtomicInteger();
+
+        @Bean
+        ShellyHttpClientCustomizer requestLog() {
+            return http -> {
+                APPLIED.incrementAndGet();
+                return http;
+            };
         }
     }
 
