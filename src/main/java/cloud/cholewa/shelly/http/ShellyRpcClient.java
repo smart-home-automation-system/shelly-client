@@ -1,0 +1,208 @@
+package cloud.cholewa.shelly.http;
+
+import cloud.cholewa.shelly.model.BthomeSensorConfig;
+import cloud.cholewa.shelly.model.BthomeSensorStatus;
+import cloud.cholewa.shelly.model.CoverStatus;
+import cloud.cholewa.shelly.model.Gen2LightStatus;
+import cloud.cholewa.shelly.model.RgbwStatus;
+import cloud.cholewa.shelly.model.SwitchStatus;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.MediaType;
+import org.springframework.web.reactive.function.client.WebClient;
+import reactor.core.publisher.Mono;
+
+/**
+ * The RPC of a Gen2+ device over HTTP: {@code POST /rpc/<Method>} with the parameters as JSON.
+ * <p>
+ * Every method takes the address of the device - a host or {@code host:port}, as the device
+ * registry holds it - and, for a component, its id (the channel). A call ends with the answer
+ * or with a {@link ShellyCallException}; a refusal the device explained is a
+ * {@link ShellyRpcException}. Nothing is retried: a command sent twice is the caller's
+ * decision.
+ */
+public class ShellyRpcClient {
+
+    private static final ParameterizedTypeReference<Map<String, Object>> COMPONENTS = new ParameterizedTypeReference<>() {
+    };
+
+    private final ShellyHttp http;
+
+    public ShellyRpcClient(WebClient.Builder builder, ShellyTimeouts timeouts) {
+        this.http = new ShellyHttp(builder, timeouts);
+    }
+
+    public Mono<Void> coverOpen(String address, int id) {
+        return command(address, "Cover.Open", params(id));
+    }
+
+    public Mono<Void> coverClose(String address, int id) {
+        return command(address, "Cover.Close", params(id));
+    }
+
+    public Mono<Void> coverStop(String address, int id) {
+        return command(address, "Cover.Stop", params(id));
+    }
+
+    /**
+     * @param position
+     *            0 (closed) to 100 (open). The device refuses it (-106) while the cover is not
+     *            calibrated - {@code pos_control} of its status says whether it is.
+     */
+    public Mono<Void> coverGoToPosition(String address, int id, int position) {
+        Map<String, Object> params = params(id);
+        params.put("pos", position);
+        return command(address, "Cover.GoToPosition", params);
+    }
+
+    public Mono<CoverStatus> coverStatus(String address, int id) {
+        return read(address, "Cover.GetStatus", params(id), CoverStatus.class, status -> status.getState() != null);
+    }
+
+    public Mono<Void> switchSet(String address, int id, boolean on) {
+        Map<String, Object> params = params(id);
+        params.put("on", on);
+        return command(address, "Switch.Set", params);
+    }
+
+    public Mono<SwitchStatus> switchStatus(String address, int id) {
+        return read(address, "Switch.GetStatus", params(id), SwitchStatus.class, status -> status.getOutput() != null);
+    }
+
+    /**
+     * @param on
+     *            {@code null} leaves the output as it is
+     * @param brightness
+     *            0 to 100; {@code null} leaves it as it is
+     */
+    public Mono<Void> lightSet(String address, int id, Boolean on, Integer brightness) {
+        Map<String, Object> params = params(id);
+        put(params, "on", on);
+        put(params, "brightness", brightness);
+        return command(address, "Light.Set", params);
+    }
+
+    public Mono<Void> lightToggle(String address, int id) {
+        return command(address, "Light.Toggle", params(id));
+    }
+
+    public Mono<Gen2LightStatus> lightStatus(String address, int id) {
+        return read(address, "Light.GetStatus", params(id), Gen2LightStatus.class,
+            status -> status.getOutput() != null);
+    }
+
+    /**
+     * The component {@code rgb} - a Plus RGBW PM in the profile rgb. A parameter left
+     * {@code null} is not sent, and the device leaves that part as it is.
+     *
+     * @param rgb
+     *            red, green and blue, 0 to 255 each
+     * @param brightness
+     *            0 to 100
+     */
+    public Mono<Void> rgbSet(String address, int id, Boolean on, List<Integer> rgb, Integer brightness) {
+        Map<String, Object> params = params(id);
+        put(params, "on", on);
+        put(params, "rgb", rgb);
+        put(params, "brightness", brightness);
+        return command(address, "RGB.Set", params);
+    }
+
+    public Mono<RgbwStatus> rgbStatus(String address, int id) {
+        return read(address, "RGB.GetStatus", params(id), RgbwStatus.class, status -> status.getOutput() != null);
+    }
+
+    /**
+     * The component {@code rgbw} - the same device in the profile rgbw, with a white channel.
+     *
+     * @param white
+     *            0 to 255
+     */
+    public Mono<Void> rgbwSet(String address, int id, Boolean on, List<Integer> rgb, Integer white,
+            Integer brightness) {
+        Map<String, Object> params = params(id);
+        put(params, "on", on);
+        put(params, "rgb", rgb);
+        put(params, "white", white);
+        put(params, "brightness", brightness);
+        return command(address, "RGBW.Set", params);
+    }
+
+    public Mono<RgbwStatus> rgbwStatus(String address, int id) {
+        return read(address, "RGBW.GetStatus", params(id), RgbwStatus.class, status -> status.getOutput() != null);
+    }
+
+    /**
+     * {@code Shelly.GetStatus}: every component of the device under its key ({@code switch:0},
+     * {@code sys}, {@code wifi}), each as a raw map - which components there are differs by
+     * the model of the device.
+     */
+    public Mono<Map<String, Object>> status(String address) {
+        return components(address, "Shelly.GetStatus", status -> status.containsKey("sys"));
+    }
+
+    public Mono<BthomeSensorConfig> bthomeSensorConfig(String address, int id) {
+        return read(address, "BTHomeSensor.GetConfig", params(id), BthomeSensorConfig.class,
+            config -> config.getId() != null);
+    }
+
+    public Mono<BthomeSensorStatus> bthomeSensorStatus(String address, int id) {
+        return read(address, "BTHomeSensor.GetStatus", params(id), BthomeSensorStatus.class,
+            status -> status.getId() != null);
+    }
+
+    /**
+     * {@code Webhook.ListSupported}: the events the device can call a URL for, as a raw map -
+     * the shape differs between firmware versions.
+     */
+    public Mono<Map<String, Object>> webhookListSupported(String address) {
+        return components(address, "Webhook.ListSupported", supported -> !supported.isEmpty());
+    }
+
+    private Mono<Void> command(String address, String method, Map<String, Object> params) {
+        String call = method + " on " + address;
+        return Mono.defer(() -> request(address, method, params).exchangeToMono(response -> http.done(response, call)))
+            .transform(result -> http.bounded(result, call));
+    }
+
+    private <T> Mono<T> read(String address, String method, Map<String, Object> params, Class<T> model,
+            Predicate<T> isAnswer) {
+        String call = method + " on " + address;
+        return Mono
+            .defer(() -> request(address, method, params)
+                .exchangeToMono(response -> http.body(response, response.bodyToMono(model), call)))
+            .transform(result -> http.answer(result, isAnswer, call));
+    }
+
+    private Mono<Map<String, Object>> components(String address, String method,
+            Predicate<Map<String, Object>> isAnswer) {
+        String call = method + " on " + address;
+        return Mono
+            .defer(() -> request(address, method, Map.of())
+                .exchangeToMono(response -> http.body(response, response.bodyToMono(COMPONENTS), call)))
+            .transform(result -> http.answer(result, isAnswer, call));
+    }
+
+    // Always a body, "{}" when there is no parameter: a device refuses a POST without a
+    // Content-Length. And a POST, not a GET with a query: a list (rgb) has no form in a query
+    // that every firmware reads.
+    private WebClient.RequestHeadersSpec<?> request(String address, String method, Map<String, Object> params) {
+        return http.client().post().uri(ShellyHttp.uri(address, "/rpc/" + method, Map.of()))
+            .contentType(MediaType.APPLICATION_JSON).bodyValue(params);
+    }
+
+    private static Map<String, Object> params(int id) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("id", id);
+        return params;
+    }
+
+    private static void put(Map<String, Object> params, String name, Object value) {
+        if (value != null) {
+            params.put(name, value);
+        }
+    }
+}

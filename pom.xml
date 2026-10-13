@@ -28,13 +28,13 @@
 		<maven.compiler.target>${java.version}</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-		<jakarta.annotation-api.version>3.0.0</jakarta.annotation-api.version>
-		<jakarta.validation-api.version>3.1.1</jakarta.validation-api.version>
-		<jackson-annotations.version>2.22</jackson-annotations.version>
-		<jackson-databind.version>3.2.3</jackson-databind.version>
-		<junit-jupiter.version>6.1.2</junit-jupiter.version>
-		<lombok.version>1.18.46</lombok.version>
+		<!-- The versions of everything Spring Boot manages come from its BOM - the one the
+		     consumers build on - so the clients and the decoder are compiled and tested against
+		     what a service runs them with. Moved with the Boot parent of the services -->
+		<spring-boot.version>4.1.1</spring-boot.version>
+		<mockwebserver3.version>5.5.0</mockwebserver3.version>
 		<swagger-annotations.version>2.2.52</swagger-annotations.version>
+
 
 		<!--  plugins versions-->
 		<maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
@@ -48,12 +48,22 @@
 		<openapi-generator.version>7.24.0</openapi-generator.version>
 	</properties>
 
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-dependencies</artifactId>
+				<version>${spring-boot.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 	<dependencies>
+		<!-- what the models need - the only dependencies a consumer gets from this library -->
 		<dependency>
 			<groupId>com.fasterxml.jackson.core</groupId>
 			<artifactId>jackson-annotations</artifactId>
-			<version>${jackson-annotations.version}</version>
-			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>io.swagger.core.v3</groupId>
@@ -63,41 +73,76 @@
 		<dependency>
 			<groupId>jakarta.annotation</groupId>
 			<artifactId>jakarta.annotation-api</artifactId>
-			<version>${jakarta.annotation-api.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>jakarta.validation</groupId>
 			<artifactId>jakarta.validation-api</artifactId>
-			<version>${jakarta.validation-api.version}</version>
+		</dependency>
+
+		<!-- what the clients and the decoder need - provided: the consumer brings it, and a
+		     consumer that only wants the models gets none of it. The clients (http) need
+		     WebFlux and Reactor Netty, the decoder (codec) Jackson 3, the auto-configuration
+		     Spring Boot; it registers each part only when its classes are there -->
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-webflux</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.projectreactor.netty</groupId>
+			<artifactId>reactor-netty-http</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<!-- ChannelOption, for the connect timeout: Reactor Netty brings Netty at runtime only -->
+		<dependency>
+			<groupId>io.netty</groupId>
+			<artifactId>netty-transport</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>tools.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-autoconfigure</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<!-- writes META-INF/spring-configuration-metadata.json for the shelly.client.* group -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
 		</dependency>
 
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>${lombok.version}</version>
 			<optional>true</optional>
 		</dependency>
 
-		<!-- test only: the decode tests read sample payloads the way the consumers do, with
-		     Jackson 3. The library itself still ships annotations and no databind -->
 		<dependency>
-			<groupId>tools.jackson.core</groupId>
-			<artifactId>jackson-databind</artifactId>
-			<version>${jackson-databind.version}</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
 		</dependency>
-
+		<!-- the real WebClientAutoConfiguration, for the test of the order of the auto-configurations -->
 		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-api</artifactId>
-			<version>${junit-jupiter.version}</version>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-webclient</artifactId>
 			<scope>test</scope>
 		</dependency>
-
 		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-params</artifactId>
-			<version>${junit-jupiter.version}</version>
+			<groupId>io.projectreactor</groupId>
+			<artifactId>reactor-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- mockwebserver3, not the legacy mockwebserver: that one brings JUnit 4 -->
+		<dependency>
+			<groupId>com.squareup.okhttp3</groupId>
+			<artifactId>mockwebserver3</artifactId>
+			<version>${mockwebserver3.version}</version>
 			<scope>test</scope>
 		</dependency>
 	</dependencies>
