@@ -110,7 +110,9 @@ components:
       type: object
       properties:
         mode:
-          description: The mode of a device that has two - color or white (RGBW2, bulb), roller or relay (2.5).
+          description: >-
+            color or white - the mode of an RGBW2 or a bulb. A Shelly 2.5 does not say in
+            /status whether it is a roller or two relays; the list that is filled does.
           type: string
         unixtime:
           type: integer
@@ -308,6 +310,42 @@ components:
         target_pos:
           description: Where the cover is going; sent only while it moves to a position.
           type: integer
+        errors:
+          type: array
+          items:
+            type: string
+    SwitchStatus:
+      description: >-
+        The status of the component switch of a Gen2+ device - a relay, a plug, one channel of
+        a Pro 4PM. The fields of the measurement are missing on a device without a meter.
+      type: object
+      properties:
+        id:
+          type: integer
+        source:
+          description: What caused the last change - init after a restart of the device, HTTP_in, SHC for the Shelly cloud, and more.
+          type: string
+        output:
+          type: boolean
+        apower:
+          type: number
+          format: double
+        voltage:
+          type: number
+          format: double
+        current:
+          type: number
+          format: double
+        pf:
+          type: number
+          format: double
+        freq:
+          type: number
+          format: double
+        aenergy:
+          $ref: '#/components/schemas/EnergyCounter'
+        temperature:
+          $ref: '#/components/schemas/ComponentTemperature'
         errors:
           type: array
           items:
@@ -533,7 +571,11 @@ components:
         value:
           description: >-
             A number, a boolean or a text - by the object the sensor is for (obj_id of its
-            configuration). Not typed here; the reader decides by the object.
+            configuration). Not typed here; the reader decides by the object, and reads a
+            number as a Number - 21 arrives as an Integer, 21.6 as a Double.
+          # "type: object" stands for "anything" here: it is what makes the generator write
+          # java.lang.Object. A schema without a type, the way OpenAPI spells any value, makes
+          # it write JsonNullable - a class of a library this one does not have
           type: object
         last_updated_ts:
           type: integer
@@ -570,7 +612,7 @@ components:
     NotifyStatus:
       description: >-
         The notification of a change, method NotifyStatus. params holds ts (seconds of the
-        Unix epoch, a number) and, under the key of each component that changed (switch:0),
+        Unix epoch - a Number, with or without a fraction) and, under the key of each component that changed (switch:0),
         only the fields that changed - a raw delta, left as a map.
       type: object
       properties:

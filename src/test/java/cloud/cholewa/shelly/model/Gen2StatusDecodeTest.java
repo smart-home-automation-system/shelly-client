@@ -2,6 +2,7 @@ package cloud.cholewa.shelly.model;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -52,6 +53,25 @@ class Gen2StatusDecodeTest {
         assertEquals(74, cover.getCurrentPos());
         assertEquals(30, cover.getTargetPos());
         assertEquals(118.6, cover.getApower());
+    }
+
+    // The switch of a device with a meter: the measurements have fractions, which the older
+    // ShellyPro4StatusResponse of this library cuts off.
+    @Test
+    void shouldDecodeASwitchWithItsMeasurements() {
+        SwitchStatus output = Samples.decode("gen2/switch-status.json", SwitchStatus.class);
+
+        assertEquals(2, output.getId());
+        assertEquals("init", output.getSource());
+        assertTrue(output.getOutput());
+        assertEquals(41.3, output.getApower());
+        assertEquals(231.2, output.getVoltage());
+        assertEquals(0.184, output.getCurrent());
+        assertEquals(0.97, output.getPf());
+        assertEquals(50.0, output.getFreq());
+        assertEquals(5123.45, output.getAenergy().getTotal());
+        assertEquals(39.1, output.getTemperature().gettC());
+        assertTrue(output.getErrors().isEmpty());
     }
 
     @Test
@@ -145,7 +165,8 @@ class Gen2StatusDecodeTest {
     }
 
     // The value of a Bluetooth sensor has the type of what it measures: the model keeps it as
-    // Jackson reads it, a Double for a temperature and a Boolean for a window.
+    // Jackson reads it - a Boolean for a window, and for a number whatever the JSON spelled:
+    // a Double with a fraction, an Integer without one. A reader takes it as a Number.
     @Test
     void shouldKeepTheValueOfABluetoothSensorInItsOwnType() {
         BthomeSensorStatus temperature =
@@ -156,6 +177,10 @@ class Gen2StatusDecodeTest {
 
         BthomeSensorStatus window = Samples.decode("gen2/bthomesensor-status-boolean.json", BthomeSensorStatus.class);
         assertEquals(Boolean.TRUE, window.getValue());
+
+        BthomeSensorStatus whole = Samples.decodeText("{\"id\":201,\"value\":21}", BthomeSensorStatus.class);
+        assertEquals(21, whole.getValue());
+        assertEquals(21.0, assertInstanceOf(Number.class, whole.getValue()).doubleValue());
     }
 
     @Test
@@ -188,5 +213,27 @@ class Gen2StatusDecodeTest {
         PresenceStatus zone = Samples.decodeText("{}", PresenceStatus.class);
         assertNull(zone.getValue());
         assertNull(zone.getNumObjects());
+
+        SwitchStatus output = Samples.decodeText("{}", SwitchStatus.class);
+        assertNull(output.getOutput());
+        assertNull(output.getApower());
+    }
+
+    // The one exception: a list. The generator starts it empty, so a list a device did not
+    // send cannot be told from one it sent empty - ask isEmpty(), never get(0).
+    @Test
+    void shouldReadAListADeviceDoesNotSendAsEmpty() {
+        assertTrue(Samples.decodeText("{}", RgbwStatus.class).getRgb().isEmpty());
+        assertTrue(Samples.decodeText("{}", CoverStatus.class).getErrors().isEmpty());
+        assertTrue(Samples.decodeText("{}", EnergyCounter.class).getByMinute().isEmpty());
+    }
+
+    // ...and only for a model that was decoded or made with new: the builder leaves a list it
+    // was not given null. A stub built for a test has to give every list its code reads.
+    @Test
+    void shouldLeaveAListTheBuilderWasNotGivenNull() {
+        assertNull(RgbwStatus.builder().build().getRgb());
+        assertNull(CoverStatus.builder().build().getErrors());
+        assertTrue(new RgbwStatus().getRgb().isEmpty());
     }
 }
