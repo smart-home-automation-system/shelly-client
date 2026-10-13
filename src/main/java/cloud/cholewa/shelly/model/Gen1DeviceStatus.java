@@ -31,7 +31,7 @@ public class Gen1DeviceStatus {
     public static final String JSON_PROPERTY_ROLLERS = "rollers";
     private List<@Valid RollerStatus> rollers = new ArrayList<>();
     public static final String JSON_PROPERTY_LIGHTS = "lights";
-    private List<@Valid LightStatus> lights = new ArrayList<>();
+    private List<@Valid Gen1LightStatus> lights = new ArrayList<>();
     public static final String JSON_PROPERTY_RELAYS = "relays";
     private List<@Valid Relay> relays = new ArrayList<>();
 
@@ -136,12 +136,12 @@ public class Gen1DeviceStatus {
         this.rollers = rollers;
     }
 
-    public Gen1DeviceStatus lights(List<@Valid LightStatus> lights) {
+    public Gen1DeviceStatus lights(List<@Valid Gen1LightStatus> lights) {
         this.lights = lights;
         return this;
     }
 
-    public Gen1DeviceStatus addLightsItem(LightStatus lightsItem) {
+    public Gen1DeviceStatus addLightsItem(Gen1LightStatus lightsItem) {
         if (this.lights == null) {
             this.lights = new ArrayList<>();
         }
@@ -153,13 +153,13 @@ public class Gen1DeviceStatus {
     @Valid
     @JsonProperty(JSON_PROPERTY_LIGHTS)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-    public List<@Valid LightStatus> getLights() {
+    public List<@Valid Gen1LightStatus> getLights() {
         return lights;
     }
 
     @JsonProperty(JSON_PROPERTY_LIGHTS)
     @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
-    public void setLights(List<@Valid LightStatus> lights) {
+    public void setLights(List<@Valid Gen1LightStatus> lights) {
         this.lights = lights;
     }
 

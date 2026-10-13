@@ -76,7 +76,7 @@ class Gen2StatusDecodeTest {
 
     @Test
     void shouldDecodeADimmerWithAChangeUnderWay() {
-        LightStatus2 light = Samples.decode("gen2/light-status.json", LightStatus2.class);
+        Gen2LightStatus light = Samples.decode("gen2/light-status.json", Gen2LightStatus.class);
 
         assertEquals(0, light.getId());
         assertEquals("HTTP_in", light.getSource());
@@ -202,7 +202,7 @@ class Gen2StatusDecodeTest {
         assertNull(cover.getCurrentPos());
         assertNull(cover.getPosControl());
 
-        LightStatus2 light = Samples.decodeText("{}", LightStatus2.class);
+        Gen2LightStatus light = Samples.decodeText("{}", Gen2LightStatus.class);
         assertNull(light.getOutput());
         assertNull(light.getBrightness());
 

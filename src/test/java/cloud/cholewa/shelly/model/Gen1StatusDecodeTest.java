@@ -47,7 +47,7 @@ class Gen1StatusDecodeTest {
         Gen1DeviceStatus status = Samples.decode("gen1/rgbw2-color-status.json", Gen1DeviceStatus.class);
 
         assertEquals("color", status.getMode());
-        LightStatus light = status.getLights().get(0);
+        Gen1LightStatus light = status.getLights().get(0);
         assertTrue(light.getIson());
         assertEquals("http", light.getSource());
         assertEquals("color", light.getMode());
@@ -71,7 +71,7 @@ class Gen1StatusDecodeTest {
         Gen1DeviceStatus status = Samples.decode("gen1/duo-status.json", Gen1DeviceStatus.class);
 
         assertNull(status.getMode());
-        LightStatus light = status.getLights().get(0);
+        Gen1LightStatus light = status.getLights().get(0);
         assertFalse(light.getIson());
         assertEquals("cloud", light.getSource());
         assertEquals(100, light.getBrightness());
@@ -119,7 +119,7 @@ class Gen1StatusDecodeTest {
         assertNull(roller.getCurrentPos());
         assertNull(roller.getPositioning());
 
-        LightStatus light = Samples.decodeText("{}", LightStatus.class);
+        Gen1LightStatus light = Samples.decodeText("{}", Gen1LightStatus.class);
         assertNull(light.getIson());
         assertNull(light.getBrightness());
         assertNull(light.getGain());

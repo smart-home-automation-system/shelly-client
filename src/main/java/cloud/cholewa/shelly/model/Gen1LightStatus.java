@@ -8,17 +8,18 @@ import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@JsonPropertyOrder({LightStatus.JSON_PROPERTY_ISON, LightStatus.JSON_PROPERTY_SOURCE,
-        LightStatus.JSON_PROPERTY_HAS_TIMER, LightStatus.JSON_PROPERTY_TIMER_STARTED,
-        LightStatus.JSON_PROPERTY_TIMER_DURATION, LightStatus.JSON_PROPERTY_TIMER_REMAINING,
-        LightStatus.JSON_PROPERTY_MODE, LightStatus.JSON_PROPERTY_RED, LightStatus.JSON_PROPERTY_GREEN,
-        LightStatus.JSON_PROPERTY_BLUE, LightStatus.JSON_PROPERTY_WHITE, LightStatus.JSON_PROPERTY_GAIN,
-        LightStatus.JSON_PROPERTY_BRIGHTNESS, LightStatus.JSON_PROPERTY_TEMP, LightStatus.JSON_PROPERTY_EFFECT,
-        LightStatus.JSON_PROPERTY_TRANSITION, LightStatus.JSON_PROPERTY_POWER, LightStatus.JSON_PROPERTY_OVERPOWER})
+@JsonPropertyOrder({Gen1LightStatus.JSON_PROPERTY_ISON, Gen1LightStatus.JSON_PROPERTY_SOURCE,
+        Gen1LightStatus.JSON_PROPERTY_HAS_TIMER, Gen1LightStatus.JSON_PROPERTY_TIMER_STARTED,
+        Gen1LightStatus.JSON_PROPERTY_TIMER_DURATION, Gen1LightStatus.JSON_PROPERTY_TIMER_REMAINING,
+        Gen1LightStatus.JSON_PROPERTY_MODE, Gen1LightStatus.JSON_PROPERTY_RED, Gen1LightStatus.JSON_PROPERTY_GREEN,
+        Gen1LightStatus.JSON_PROPERTY_BLUE, Gen1LightStatus.JSON_PROPERTY_WHITE, Gen1LightStatus.JSON_PROPERTY_GAIN,
+        Gen1LightStatus.JSON_PROPERTY_BRIGHTNESS, Gen1LightStatus.JSON_PROPERTY_TEMP,
+        Gen1LightStatus.JSON_PROPERTY_EFFECT, Gen1LightStatus.JSON_PROPERTY_TRANSITION,
+        Gen1LightStatus.JSON_PROPERTY_POWER, Gen1LightStatus.JSON_PROPERTY_OVERPOWER})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
 @SuperBuilder
-public class LightStatus {
+public class Gen1LightStatus {
 
     public static final String JSON_PROPERTY_ISON = "ison";
     private Boolean ison;
@@ -57,7 +58,7 @@ public class LightStatus {
     public static final String JSON_PROPERTY_OVERPOWER = "overpower";
     private Boolean overpower;
 
-    public LightStatus ison(Boolean ison) {
+    public Gen1LightStatus ison(Boolean ison) {
         this.ison = ison;
         return this;
     }
@@ -75,7 +76,7 @@ public class LightStatus {
         this.ison = ison;
     }
 
-    public LightStatus source(String source) {
+    public Gen1LightStatus source(String source) {
         this.source = source;
         return this;
     }
@@ -93,7 +94,7 @@ public class LightStatus {
         this.source = source;
     }
 
-    public LightStatus hasTimer(Boolean hasTimer) {
+    public Gen1LightStatus hasTimer(Boolean hasTimer) {
         this.hasTimer = hasTimer;
         return this;
     }
@@ -111,7 +112,7 @@ public class LightStatus {
         this.hasTimer = hasTimer;
     }
 
-    public LightStatus timerStarted(Long timerStarted) {
+    public Gen1LightStatus timerStarted(Long timerStarted) {
         this.timerStarted = timerStarted;
         return this;
     }
@@ -129,7 +130,7 @@ public class LightStatus {
         this.timerStarted = timerStarted;
     }
 
-    public LightStatus timerDuration(Integer timerDuration) {
+    public Gen1LightStatus timerDuration(Integer timerDuration) {
         this.timerDuration = timerDuration;
         return this;
     }
@@ -147,7 +148,7 @@ public class LightStatus {
         this.timerDuration = timerDuration;
     }
 
-    public LightStatus timerRemaining(Integer timerRemaining) {
+    public Gen1LightStatus timerRemaining(Integer timerRemaining) {
         this.timerRemaining = timerRemaining;
         return this;
     }
@@ -165,7 +166,7 @@ public class LightStatus {
         this.timerRemaining = timerRemaining;
     }
 
-    public LightStatus mode(String mode) {
+    public Gen1LightStatus mode(String mode) {
         this.mode = mode;
         return this;
     }
@@ -183,7 +184,7 @@ public class LightStatus {
         this.mode = mode;
     }
 
-    public LightStatus red(Integer red) {
+    public Gen1LightStatus red(Integer red) {
         this.red = red;
         return this;
     }
@@ -201,7 +202,7 @@ public class LightStatus {
         this.red = red;
     }
 
-    public LightStatus green(Integer green) {
+    public Gen1LightStatus green(Integer green) {
         this.green = green;
         return this;
     }
@@ -219,7 +220,7 @@ public class LightStatus {
         this.green = green;
     }
 
-    public LightStatus blue(Integer blue) {
+    public Gen1LightStatus blue(Integer blue) {
         this.blue = blue;
         return this;
     }
@@ -237,7 +238,7 @@ public class LightStatus {
         this.blue = blue;
     }
 
-    public LightStatus white(Integer white) {
+    public Gen1LightStatus white(Integer white) {
         this.white = white;
         return this;
     }
@@ -255,7 +256,7 @@ public class LightStatus {
         this.white = white;
     }
 
-    public LightStatus gain(Integer gain) {
+    public Gen1LightStatus gain(Integer gain) {
         this.gain = gain;
         return this;
     }
@@ -273,7 +274,7 @@ public class LightStatus {
         this.gain = gain;
     }
 
-    public LightStatus brightness(Integer brightness) {
+    public Gen1LightStatus brightness(Integer brightness) {
         this.brightness = brightness;
         return this;
     }
@@ -291,7 +292,7 @@ public class LightStatus {
         this.brightness = brightness;
     }
 
-    public LightStatus temp(Integer temp) {
+    public Gen1LightStatus temp(Integer temp) {
         this.temp = temp;
         return this;
     }
@@ -309,7 +310,7 @@ public class LightStatus {
         this.temp = temp;
     }
 
-    public LightStatus effect(Integer effect) {
+    public Gen1LightStatus effect(Integer effect) {
         this.effect = effect;
         return this;
     }
@@ -327,7 +328,7 @@ public class LightStatus {
         this.effect = effect;
     }
 
-    public LightStatus transition(Integer transition) {
+    public Gen1LightStatus transition(Integer transition) {
         this.transition = transition;
         return this;
     }
@@ -345,7 +346,7 @@ public class LightStatus {
         this.transition = transition;
     }
 
-    public LightStatus power(Double power) {
+    public Gen1LightStatus power(Double power) {
         this.power = power;
         return this;
     }
@@ -363,7 +364,7 @@ public class LightStatus {
         this.power = power;
     }
 
-    public LightStatus overpower(Boolean overpower) {
+    public Gen1LightStatus overpower(Boolean overpower) {
         this.overpower = overpower;
         return this;
     }
@@ -389,20 +390,21 @@ public class LightStatus {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        LightStatus lightStatus = (LightStatus) o;
-        return Objects.equals(this.ison, lightStatus.ison) && Objects.equals(this.source, lightStatus.source)
-                && Objects.equals(this.hasTimer, lightStatus.hasTimer)
-                && Objects.equals(this.timerStarted, lightStatus.timerStarted)
-                && Objects.equals(this.timerDuration, lightStatus.timerDuration)
-                && Objects.equals(this.timerRemaining, lightStatus.timerRemaining)
-                && Objects.equals(this.mode, lightStatus.mode) && Objects.equals(this.red, lightStatus.red)
-                && Objects.equals(this.green, lightStatus.green) && Objects.equals(this.blue, lightStatus.blue)
-                && Objects.equals(this.white, lightStatus.white) && Objects.equals(this.gain, lightStatus.gain)
-                && Objects.equals(this.brightness, lightStatus.brightness)
-                && Objects.equals(this.temp, lightStatus.temp) && Objects.equals(this.effect, lightStatus.effect)
-                && Objects.equals(this.transition, lightStatus.transition)
-                && Objects.equals(this.power, lightStatus.power)
-                && Objects.equals(this.overpower, lightStatus.overpower);
+        Gen1LightStatus gen1LightStatus = (Gen1LightStatus) o;
+        return Objects.equals(this.ison, gen1LightStatus.ison) && Objects.equals(this.source, gen1LightStatus.source)
+                && Objects.equals(this.hasTimer, gen1LightStatus.hasTimer)
+                && Objects.equals(this.timerStarted, gen1LightStatus.timerStarted)
+                && Objects.equals(this.timerDuration, gen1LightStatus.timerDuration)
+                && Objects.equals(this.timerRemaining, gen1LightStatus.timerRemaining)
+                && Objects.equals(this.mode, gen1LightStatus.mode) && Objects.equals(this.red, gen1LightStatus.red)
+                && Objects.equals(this.green, gen1LightStatus.green) && Objects.equals(this.blue, gen1LightStatus.blue)
+                && Objects.equals(this.white, gen1LightStatus.white) && Objects.equals(this.gain, gen1LightStatus.gain)
+                && Objects.equals(this.brightness, gen1LightStatus.brightness)
+                && Objects.equals(this.temp, gen1LightStatus.temp)
+                && Objects.equals(this.effect, gen1LightStatus.effect)
+                && Objects.equals(this.transition, gen1LightStatus.transition)
+                && Objects.equals(this.power, gen1LightStatus.power)
+                && Objects.equals(this.overpower, gen1LightStatus.overpower);
     }
 
     @Override
@@ -414,7 +416,7 @@ public class LightStatus {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("class LightStatus {\n");
+        sb.append("class Gen1LightStatus {\n");
         sb.append("    ison: ").append(toIndentedString(ison)).append("\n");
         sb.append("    source: ").append(toIndentedString(source)).append("\n");
         sb.append("    hasTimer: ").append(toIndentedString(hasTimer)).append("\n");

@@ -11,14 +11,16 @@ import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@JsonPropertyOrder({LightStatus2.JSON_PROPERTY_ID, LightStatus2.JSON_PROPERTY_SOURCE, LightStatus2.JSON_PROPERTY_OUTPUT,
-        LightStatus2.JSON_PROPERTY_BRIGHTNESS, LightStatus2.JSON_PROPERTY_TRANSITION,
-        LightStatus2.JSON_PROPERTY_TEMPERATURE, LightStatus2.JSON_PROPERTY_AENERGY, LightStatus2.JSON_PROPERTY_APOWER,
-        LightStatus2.JSON_PROPERTY_VOLTAGE, LightStatus2.JSON_PROPERTY_CURRENT, LightStatus2.JSON_PROPERTY_ERRORS})
+@JsonPropertyOrder({Gen2LightStatus.JSON_PROPERTY_ID, Gen2LightStatus.JSON_PROPERTY_SOURCE,
+        Gen2LightStatus.JSON_PROPERTY_OUTPUT, Gen2LightStatus.JSON_PROPERTY_BRIGHTNESS,
+        Gen2LightStatus.JSON_PROPERTY_TRANSITION, Gen2LightStatus.JSON_PROPERTY_TEMPERATURE,
+        Gen2LightStatus.JSON_PROPERTY_AENERGY, Gen2LightStatus.JSON_PROPERTY_APOWER,
+        Gen2LightStatus.JSON_PROPERTY_VOLTAGE, Gen2LightStatus.JSON_PROPERTY_CURRENT,
+        Gen2LightStatus.JSON_PROPERTY_ERRORS})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
 @SuperBuilder
-public class LightStatus2 {
+public class Gen2LightStatus {
 
     public static final String JSON_PROPERTY_ID = "id";
     private Integer id;
@@ -43,7 +45,7 @@ public class LightStatus2 {
     public static final String JSON_PROPERTY_ERRORS = "errors";
     private List<String> errors = new ArrayList<>();
 
-    public LightStatus2 id(Integer id) {
+    public Gen2LightStatus id(Integer id) {
         this.id = id;
         return this;
     }
@@ -61,7 +63,7 @@ public class LightStatus2 {
         this.id = id;
     }
 
-    public LightStatus2 source(String source) {
+    public Gen2LightStatus source(String source) {
         this.source = source;
         return this;
     }
@@ -79,7 +81,7 @@ public class LightStatus2 {
         this.source = source;
     }
 
-    public LightStatus2 output(Boolean output) {
+    public Gen2LightStatus output(Boolean output) {
         this.output = output;
         return this;
     }
@@ -97,7 +99,7 @@ public class LightStatus2 {
         this.output = output;
     }
 
-    public LightStatus2 brightness(Integer brightness) {
+    public Gen2LightStatus brightness(Integer brightness) {
         this.brightness = brightness;
         return this;
     }
@@ -115,7 +117,7 @@ public class LightStatus2 {
         this.brightness = brightness;
     }
 
-    public LightStatus2 transition(LightTransition transition) {
+    public Gen2LightStatus transition(LightTransition transition) {
         this.transition = transition;
         return this;
     }
@@ -134,7 +136,7 @@ public class LightStatus2 {
         this.transition = transition;
     }
 
-    public LightStatus2 temperature(ComponentTemperature temperature) {
+    public Gen2LightStatus temperature(ComponentTemperature temperature) {
         this.temperature = temperature;
         return this;
     }
@@ -153,7 +155,7 @@ public class LightStatus2 {
         this.temperature = temperature;
     }
 
-    public LightStatus2 aenergy(EnergyCounter aenergy) {
+    public Gen2LightStatus aenergy(EnergyCounter aenergy) {
         this.aenergy = aenergy;
         return this;
     }
@@ -172,7 +174,7 @@ public class LightStatus2 {
         this.aenergy = aenergy;
     }
 
-    public LightStatus2 apower(Double apower) {
+    public Gen2LightStatus apower(Double apower) {
         this.apower = apower;
         return this;
     }
@@ -190,7 +192,7 @@ public class LightStatus2 {
         this.apower = apower;
     }
 
-    public LightStatus2 voltage(Double voltage) {
+    public Gen2LightStatus voltage(Double voltage) {
         this.voltage = voltage;
         return this;
     }
@@ -208,7 +210,7 @@ public class LightStatus2 {
         this.voltage = voltage;
     }
 
-    public LightStatus2 current(Double current) {
+    public Gen2LightStatus current(Double current) {
         this.current = current;
         return this;
     }
@@ -226,12 +228,12 @@ public class LightStatus2 {
         this.current = current;
     }
 
-    public LightStatus2 errors(List<String> errors) {
+    public Gen2LightStatus errors(List<String> errors) {
         this.errors = errors;
         return this;
     }
 
-    public LightStatus2 addErrorsItem(String errorsItem) {
+    public Gen2LightStatus addErrorsItem(String errorsItem) {
         if (this.errors == null) {
             this.errors = new ArrayList<>();
         }
@@ -260,17 +262,17 @@ public class LightStatus2 {
         if (o == null || getClass() != o.getClass()) {
             return false;
         }
-        LightStatus2 lightStatus2 = (LightStatus2) o;
-        return Objects.equals(this.id, lightStatus2.id) && Objects.equals(this.source, lightStatus2.source)
-                && Objects.equals(this.output, lightStatus2.output)
-                && Objects.equals(this.brightness, lightStatus2.brightness)
-                && Objects.equals(this.transition, lightStatus2.transition)
-                && Objects.equals(this.temperature, lightStatus2.temperature)
-                && Objects.equals(this.aenergy, lightStatus2.aenergy)
-                && Objects.equals(this.apower, lightStatus2.apower)
-                && Objects.equals(this.voltage, lightStatus2.voltage)
-                && Objects.equals(this.current, lightStatus2.current)
-                && Objects.equals(this.errors, lightStatus2.errors);
+        Gen2LightStatus gen2LightStatus = (Gen2LightStatus) o;
+        return Objects.equals(this.id, gen2LightStatus.id) && Objects.equals(this.source, gen2LightStatus.source)
+                && Objects.equals(this.output, gen2LightStatus.output)
+                && Objects.equals(this.brightness, gen2LightStatus.brightness)
+                && Objects.equals(this.transition, gen2LightStatus.transition)
+                && Objects.equals(this.temperature, gen2LightStatus.temperature)
+                && Objects.equals(this.aenergy, gen2LightStatus.aenergy)
+                && Objects.equals(this.apower, gen2LightStatus.apower)
+                && Objects.equals(this.voltage, gen2LightStatus.voltage)
+                && Objects.equals(this.current, gen2LightStatus.current)
+                && Objects.equals(this.errors, gen2LightStatus.errors);
     }
 
     @Override
@@ -282,7 +284,7 @@ public class LightStatus2 {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("class LightStatus2 {\n");
+        sb.append("class Gen2LightStatus {\n");
         sb.append("    id: ").append(toIndentedString(id)).append("\n");
         sb.append("    source: ").append(toIndentedString(source)).append("\n");
         sb.append("    output: ").append(toIndentedString(output)).append("\n");

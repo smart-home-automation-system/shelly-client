@@ -128,7 +128,7 @@ components:
         lights:
           type: array
           items:
-            $ref: '#/components/schemas/LightStatus'
+            $ref: '#/components/schemas/Gen1LightStatus'
         relays:
           type: array
           items:
@@ -165,7 +165,7 @@ components:
         positioning:
           description: Whether the roller was calibrated and knows its position.
           type: boolean
-    LightStatus:
+    Gen1LightStatus:
       description: >-
         One light of a Gen1 device - an item of lights in /status, and the answer of GET
         /light/0 (/color/0, /white/0). One class for every Gen1 light: a field the model of
@@ -350,7 +350,7 @@ components:
           type: array
           items:
             type: string
-    LightStatus2:
+    Gen2LightStatus:
       description: The status of the component light of a Gen2+ device - a dimmer.
       type: object
       properties:

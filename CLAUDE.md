@@ -34,6 +34,10 @@ library) during the build. On every build the pipeline is:
 
 Consequences:
 
+- **Step 1 runs only with `mvn clean`.** A plain `mvn verify` regenerates over what is there,
+  so the class of a schema that was renamed or removed stays in the folder - and in the jar
+  (HAS-226: `LightStatus` survived its renaming until a `mvn clean verify`). After removing or
+  renaming a schema build with `clean` and check `git status` for the deletion.
 - **Never hand-edit files under `model/`** — they are overwritten on the next build.
   To change a model, edit `swagger/shelly.yaml` (schemas) or the templates in
   `swagger/templates/` (code shape), then rebuild.
@@ -65,8 +69,11 @@ Consequences:
   fractions; `ShellyPro4StatusResponse` has them as integers and Jackson cuts the fraction
   off without a word. It is left as it is - `boiler-service` and `heating-service` read it -
   and `SwitchStatus` is the model for new code.
-- **Names**: `LightStatus` is the Gen1 light and `LightStatus2` the Gen2+ one, as the task
-  named them. They are public API since 1.1.0.
+- **Names carry the generation where one word means two things**: `Gen1LightStatus` and
+  `Gen2LightStatus` (owner, 2026-10-13 - the task had `LightStatus` and `LightStatus2`, and a
+  reader who took the first for a Gen2 dimmer got a class that compiles and decodes to nulls).
+  A roller is `RollerStatus` on Gen1 and `CoverStatus` on Gen2+, the words of Shelly. Public
+  API since 1.1.0.
 - **A model is added from a real payload when there is a device**: `GET /status` (Gen1) or
   `GET /rpc/Shelly.GetStatus` (Gen2+) of a device of the kind, read-only. The Bluetooth
   components had none (no gateway of the house has one paired) and are marked as unverified
