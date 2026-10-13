@@ -1,0 +1,13 @@
+{
+  "id": 0,
+  "source": "HTTP_in",
+  "tag": null,
+  "output": true,
+  "brightness": 80,
+  "transition": {"target": {"output": true, "brightness": 20}, "started_at": 1791888931.42, "duration": 3.0},
+  "temperature": {"tC": 37.0, "tF": 98.6},
+  "aenergy": {"total": 1688.578, "by_minute": [120.5, 119.8, 0.0], "minute_ts": 1791888840},
+  "apower": 7.2,
+  "current": 0.031,
+  "voltage": 228.0
+}

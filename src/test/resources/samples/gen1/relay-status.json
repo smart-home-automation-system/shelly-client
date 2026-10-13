@@ -1,0 +1,9 @@
+{
+  "wifi_sta": {"connected": true, "ssid": "iot", "ip": "192.0.2.27", "rssi": -55},
+  "cloud": {"enabled": true, "connected": false},
+  "unixtime": 1791888887,
+  "relays": [
+    {"ison": true, "has_timer": false, "timer_started": 0, "timer_duration": 0, "timer_remaining": 0, "overpower": false, "source": "input"}
+  ],
+  "meters": [{"power": 41.3, "is_valid": true}]
+}

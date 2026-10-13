@@ -1,0 +1,15 @@
+{
+  "id": 0,
+  "source": "limit_switch",
+  "state": "open",
+  "apower": 0.0,
+  "voltage": 232.4,
+  "current": 0.0,
+  "pf": 0.0,
+  "freq": 50.0,
+  "aenergy": {"total": 668.733, "by_minute": [0.0, 0.0, 0.0], "minute_ts": 1791888840},
+  "temperature": {"tC": 40.4, "tF": 104.7},
+  "pos_control": true,
+  "last_direction": "open",
+  "current_pos": 100
+}

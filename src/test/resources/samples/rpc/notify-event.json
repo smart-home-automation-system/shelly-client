@@ -1,0 +1,12 @@
+{
+  "src": "shellypro1pm-a1b2c3d4e5f6",
+  "dst": "shellypro1pm-a1b2c3d4e5f6/events",
+  "method": "NotifyEvent",
+  "params": {
+    "ts": 1791888931.42,
+    "events": [
+      {"component": "input:0", "id": 0, "event": "btn_down", "ts": 1791888931.42},
+      {"component": "input:0", "id": 0, "event": "single_push", "ts": 1791888931.9}
+    ]
+  }
+}

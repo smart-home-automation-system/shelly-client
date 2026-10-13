@@ -1,0 +1,11 @@
+{
+  "src": "shellyplus1pm-a1b2c3d4e5f6",
+  "dst": "shellyplus1pm-a1b2c3d4e5f6/events",
+  "method": "NotifyFullStatus",
+  "params": {
+    "ts": 1791888931.42,
+    "switch:0": {"id": 0, "source": "init", "output": false, "apower": 0.0, "voltage": 231.2, "current": 0.0, "temperature": {"tC": 39.1, "tF": 102.4}},
+    "sys": {"uptime": 12, "restart_required": false},
+    "wifi": {"status": "got ip", "rssi": -52}
+  }
+}

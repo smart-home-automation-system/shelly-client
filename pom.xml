@@ -31,6 +31,7 @@
 		<jakarta.annotation-api.version>3.0.0</jakarta.annotation-api.version>
 		<jakarta.validation-api.version>3.1.1</jakarta.validation-api.version>
 		<jackson-annotations.version>2.22</jackson-annotations.version>
+		<jackson-databind.version>3.2.3</jackson-databind.version>
 		<junit-jupiter.version>6.1.2</junit-jupiter.version>
 		<lombok.version>1.18.46</lombok.version>
 		<swagger-annotations.version>2.2.52</swagger-annotations.version>
@@ -75,6 +76,15 @@
 			<artifactId>lombok</artifactId>
 			<version>${lombok.version}</version>
 			<optional>true</optional>
+		</dependency>
+
+		<!-- test only: the decode tests read sample payloads the way the consumers do, with
+		     Jackson 3. The library itself still ships annotations and no databind -->
+		<dependency>
+			<groupId>tools.jackson.core</groupId>
+			<artifactId>jackson-databind</artifactId>
+			<version>${jackson-databind.version}</version>
+			<scope>test</scope>
 		</dependency>
 
 		<dependency>
