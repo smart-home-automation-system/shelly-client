@@ -97,3 +97,582 @@ components:
           tC:
             type: number
             format: double
+
+    # ---------------------------------------------------------------------------------------
+    # Gen1 - what a device answers to GET /status
+    # ---------------------------------------------------------------------------------------
+    Gen1DeviceStatus:
+      description: >-
+        The parts of GET /status of a Gen1 device the house reads. Which of the three lists
+        is filled follows from the device: a Shelly 2.5 in roller mode has rollers, a bulb or
+        an RGBW2 has lights, a plug or a switch has relays. A list the device does not send
+        reads as empty.
+      type: object
+      properties:
+        mode:
+          description: >-
+            color or white - the mode of an RGBW2 or a bulb. A Shelly 2.5 does not say in
+            /status whether it is a roller or two relays; the list that is filled does.
+          type: string
+        unixtime:
+          type: integer
+          format: int64
+        wifi_sta:
+          $ref: '#/components/schemas/WifiStatus'
+        cloud:
+          $ref: '#/components/schemas/Cloud'
+        rollers:
+          type: array
+          items:
+            $ref: '#/components/schemas/RollerStatus'
+        lights:
+          type: array
+          items:
+            $ref: '#/components/schemas/Gen1LightStatus'
+        relays:
+          type: array
+          items:
+            $ref: '#/components/schemas/Relay'
+    RollerStatus:
+      description: One roller of a Gen1 device (Shelly 2.5) - an item of rollers in /status, and the answer of GET /roller/0.
+      type: object
+      properties:
+        state:
+          description: stop, open or close - what the motor does now, not where the roller is.
+          type: string
+        source:
+          type: string
+        power:
+          type: number
+          format: double
+        is_valid:
+          type: boolean
+        safety_switch:
+          type: boolean
+        overtemperature:
+          type: boolean
+        stop_reason:
+          description: normal, safety_switch, obstacle or overpower.
+          type: string
+        last_direction:
+          description: open or close.
+          type: string
+        current_pos:
+          description: 0 (closed) to 100 (open); meaningful only while positioning is true.
+          type: integer
+        calibrating:
+          type: boolean
+        positioning:
+          description: Whether the roller was calibrated and knows its position.
+          type: boolean
+    Gen1LightStatus:
+      description: >-
+        One light of a Gen1 device - an item of lights in /status, and the answer of GET
+        /light/0 (/color/0, /white/0). One class for every Gen1 light: a field the model of
+        the device does not have is missing. In the mode color the level is gain, in the mode
+        white it is brightness.
+      type: object
+      properties:
+        ison:
+          type: boolean
+        source:
+          type: string
+        has_timer:
+          type: boolean
+        timer_started:
+          type: integer
+          format: int64
+        timer_duration:
+          type: integer
+        timer_remaining:
+          type: integer
+        mode:
+          description: color or white; a device with one mode does not send it.
+          type: string
+        red:
+          type: integer
+        green:
+          type: integer
+        blue:
+          type: integer
+        white:
+          description: The white channel of an RGBW device (0-255) - or, for a Duo, the share of cold white (0-100).
+          type: integer
+        gain:
+          description: The level of the colors, 0-100 - the brightness of the mode color.
+          type: integer
+        brightness:
+          description: 0-100; the level of the mode white, and of a light without colors.
+          type: integer
+        temp:
+          description: The color temperature in kelvins.
+          type: integer
+        effect:
+          type: integer
+        transition:
+          description: The time of a change, in milliseconds.
+          type: integer
+        power:
+          type: number
+          format: double
+        overpower:
+          type: boolean
+    MotionStatus:
+      description: The parts of GET /status of a Shelly Motion (Gen1) the house reads.
+      type: object
+      properties:
+        sensor:
+          $ref: '#/components/schemas/MotionSensorState'
+        lux:
+          $ref: '#/components/schemas/MotionLux'
+        bat:
+          $ref: '#/components/schemas/MotionBattery'
+    MotionSensorState:
+      type: object
+      properties:
+        motion:
+          type: boolean
+        vibration:
+          type: boolean
+        timestamp:
+          description: When motion was last detected, in seconds of the Unix epoch.
+          type: integer
+          format: int64
+        active:
+          description: Whether the detection is switched on.
+          type: boolean
+        is_valid:
+          type: boolean
+    MotionLux:
+      type: object
+      properties:
+        value:
+          type: integer
+        illumination:
+          description: dark, twilight or bright - by the thresholds set on the device.
+          type: string
+        is_valid:
+          type: boolean
+    MotionBattery:
+      type: object
+      properties:
+        value:
+          description: Percent.
+          type: integer
+        voltage:
+          type: number
+          format: double
+
+    # ---------------------------------------------------------------------------------------
+    # Gen2 and later - the status of one component: the body of the MQTT topic
+    # <device id>/status/<component>:<id>, and the answer of <Component>.GetStatus
+    # ---------------------------------------------------------------------------------------
+    CoverStatus:
+      description: The status of the component cover - a roller driven by a Gen2+ device (Plus 2PM in the cover profile).
+      type: object
+      properties:
+        id:
+          type: integer
+        source:
+          description: What caused the last change - init after a restart of the device, limit_switch, HTTP_in, SHC for the Shelly cloud, and more.
+          type: string
+        state:
+          description: open, closed, opening, closing, stopped or calibrating.
+          type: string
+        apower:
+          type: number
+          format: double
+        voltage:
+          type: number
+          format: double
+        current:
+          type: number
+          format: double
+        pf:
+          type: number
+          format: double
+        freq:
+          type: number
+          format: double
+        aenergy:
+          $ref: '#/components/schemas/EnergyCounter'
+        temperature:
+          $ref: '#/components/schemas/ComponentTemperature'
+        pos_control:
+          description: Whether the cover was calibrated and knows its position.
+          type: boolean
+        last_direction:
+          description: open or close.
+          type: string
+        current_pos:
+          description: 0 (closed) to 100 (open); missing while the position is not known.
+          type: integer
+        target_pos:
+          description: Where the cover is going; sent only while it moves to a position.
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+    SwitchStatus:
+      description: >-
+        The status of the component switch of a Gen2+ device - a relay, a plug, one channel of
+        a Pro 4PM. The fields of the measurement are missing on a device without a meter.
+      type: object
+      properties:
+        id:
+          type: integer
+        source:
+          description: What caused the last change - init after a restart of the device, HTTP_in, SHC for the Shelly cloud, and more.
+          type: string
+        output:
+          type: boolean
+        apower:
+          type: number
+          format: double
+        voltage:
+          type: number
+          format: double
+        current:
+          type: number
+          format: double
+        pf:
+          type: number
+          format: double
+        freq:
+          type: number
+          format: double
+        aenergy:
+          $ref: '#/components/schemas/EnergyCounter'
+        temperature:
+          $ref: '#/components/schemas/ComponentTemperature'
+        errors:
+          type: array
+          items:
+            type: string
+    Gen2LightStatus:
+      description: The status of the component light of a Gen2+ device - a dimmer.
+      type: object
+      properties:
+        id:
+          type: integer
+        source:
+          type: string
+        output:
+          type: boolean
+        brightness:
+          description: 0-100.
+          type: integer
+        transition:
+          $ref: '#/components/schemas/LightTransition'
+        temperature:
+          $ref: '#/components/schemas/ComponentTemperature'
+        aenergy:
+          $ref: '#/components/schemas/EnergyCounter'
+        apower:
+          type: number
+          format: double
+        voltage:
+          type: number
+          format: double
+        current:
+          type: number
+          format: double
+        errors:
+          type: array
+          items:
+            type: string
+    RgbwStatus:
+      description: >-
+        The status of the components rgb and rgbw of a Gen2+ device (Plus RGBW PM). In the
+        profile rgb there is no white.
+      type: object
+      properties:
+        id:
+          type: integer
+        source:
+          type: string
+        output:
+          type: boolean
+        rgb:
+          description: Red, green and blue, 0-255 each, in that order.
+          type: array
+          items:
+            type: integer
+        white:
+          description: 0-255; only in the profile rgbw.
+          type: integer
+        brightness:
+          description: 0-100.
+          type: integer
+        transition:
+          $ref: '#/components/schemas/LightTransition'
+        temperature:
+          $ref: '#/components/schemas/ComponentTemperature'
+        aenergy:
+          $ref: '#/components/schemas/EnergyCounter'
+        apower:
+          type: number
+          format: double
+        voltage:
+          type: number
+          format: double
+        current:
+          type: number
+          format: double
+        errors:
+          type: array
+          items:
+            type: string
+    LightTransition:
+      description: A change of a light that is under way; sent only while it lasts.
+      type: object
+      properties:
+        target:
+          $ref: '#/components/schemas/LightTransitionTarget'
+        started_at:
+          type: number
+          format: double
+        duration:
+          description: Seconds.
+          type: number
+          format: double
+    LightTransitionTarget:
+      type: object
+      properties:
+        output:
+          type: boolean
+        brightness:
+          type: integer
+        rgb:
+          type: array
+          items:
+            type: integer
+        white:
+          type: integer
+    ComponentTemperature:
+      description: The temperature inside the device, next to the component.
+      type: object
+      properties:
+        tC:
+          type: number
+          format: double
+        tF:
+          type: number
+          format: double
+    EnergyCounter:
+      type: object
+      properties:
+        total:
+          description: Watt-hours since the counter was reset.
+          type: number
+          format: double
+        by_minute:
+          description: Milliwatt-hours of the last three whole minutes.
+          type: array
+          items:
+            type: number
+            format: double
+        minute_ts:
+          type: integer
+          format: int64
+    PresenceStatus:
+      description: >-
+        The status of the component presencezone of a Presence Gen4 - one zone of the room.
+        Read on the device (firmware 2.0.1): these three fields and no other.
+      type: object
+      properties:
+        id:
+          type: integer
+        value:
+          description: Whether somebody is in the zone.
+          type: boolean
+        num_objects:
+          description: How many it tracks there.
+          type: integer
+    IlluminanceStatus:
+      description: The status of the component illuminance. A Presence Gen4 sends the word alone, no lux.
+      type: object
+      properties:
+        id:
+          type: integer
+        lux:
+          type: number
+          format: double
+        illumination:
+          description: dark, twilight or bright - by the thresholds set on the device.
+          type: string
+    TemperatureStatus:
+      description: The status of the component temperature - a thermometer (H&T), not the temperature inside a relay.
+      type: object
+      properties:
+        id:
+          type: integer
+        tC:
+          type: number
+          format: double
+        tF:
+          type: number
+          format: double
+    HumidityStatus:
+      type: object
+      properties:
+        id:
+          type: integer
+        rh:
+          description: Relative humidity, percent.
+          type: number
+          format: double
+    DevicePowerStatus:
+      description: The status of the component devicepower - the battery of a sensor.
+      type: object
+      properties:
+        id:
+          type: integer
+        battery:
+          $ref: '#/components/schemas/DeviceBattery'
+        external:
+          $ref: '#/components/schemas/ExternalPower'
+    DeviceBattery:
+      type: object
+      properties:
+        V:
+          type: number
+          format: double
+        percent:
+          type: integer
+    ExternalPower:
+      type: object
+      properties:
+        present:
+          type: boolean
+    BthomeDeviceStatus:
+      description: The status of the component bthomedevice - a Bluetooth device paired with a gateway.
+      type: object
+      properties:
+        id:
+          type: integer
+        rssi:
+          type: integer
+        battery:
+          description: Percent.
+          type: integer
+        packet_id:
+          type: integer
+        last_updated_ts:
+          type: integer
+          format: int64
+    BthomeSensorStatus:
+      description: The status of the component bthomesensor - one value a Bluetooth device reports.
+      type: object
+      properties:
+        id:
+          type: integer
+        value:
+          description: >-
+            A number, a boolean or a text - by the object the sensor is for (obj_id of its
+            configuration). Not typed here; the reader decides by the object, and reads a
+            number as a Number - 21 arrives as an Integer, 21.6 as a Double.
+          # "type: object" stands for "anything" here: it is what makes the generator write
+          # java.lang.Object. A schema without a type, the way OpenAPI spells any value, makes
+          # it write JsonNullable - a class of a library this one does not have
+          type: object
+        last_updated_ts:
+          type: integer
+          format: int64
+    BthomeSensorConfig:
+      description: The configuration of the component bthomesensor - which value of which Bluetooth device it is.
+      type: object
+      properties:
+        id:
+          type: integer
+        addr:
+          description: The Bluetooth address of the device the value comes from.
+          type: string
+        obj_id:
+          description: The BTHome object id - what is measured (69 a temperature, 46 a humidity, 45 a window, and so on).
+          type: integer
+        idx:
+          description: Which of several objects of one kind on that device.
+          type: integer
+        name:
+          type: string
+
+    # ---------------------------------------------------------------------------------------
+    # Gen2 and later - the frames of the RPC channel
+    # ---------------------------------------------------------------------------------------
+    RpcError:
+      description: The error of an RPC call - the body of a refused HTTP call, and the error of a response frame.
+      type: object
+      properties:
+        code:
+          type: integer
+        message:
+          type: string
+    NotifyStatus:
+      description: >-
+        The notification of a change, method NotifyStatus. params holds ts (seconds of the
+        Unix epoch - a Number, with or without a fraction) and, under the key of each component that changed (switch:0),
+        only the fields that changed - a raw delta, left as a map.
+      type: object
+      properties:
+        src:
+          type: string
+        dst:
+          type: string
+        method:
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+    NotifyFullStatus:
+      description: >-
+        The notification of the whole status, method NotifyFullStatus - sent by a device after
+        it connects. params holds ts and every component under its key, whole.
+      type: object
+      properties:
+        src:
+          type: string
+        dst:
+          type: string
+        method:
+          type: string
+        params:
+          type: object
+          additionalProperties: true
+    NotifyEvent:
+      description: The notification of events, method NotifyEvent - a press of a button, a finished calibration.
+      type: object
+      properties:
+        src:
+          type: string
+        dst:
+          type: string
+        method:
+          type: string
+        params:
+          $ref: '#/components/schemas/NotifyEventParams'
+    NotifyEventParams:
+      type: object
+      properties:
+        ts:
+          type: number
+          format: double
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/RpcEvent'
+    RpcEvent:
+      type: object
+      properties:
+        component:
+          description: The key of the component - input:0.
+          type: string
+        id:
+          type: integer
+        event:
+          description: single_push, long_push, btn_down, and so on - by the component.
+          type: string
+        ts:
+          type: number
+          format: double

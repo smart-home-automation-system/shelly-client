@@ -1,0 +1,10 @@
+{
+  "wifi_sta": {"connected": true, "ssid": "iot", "ip": "192.0.2.28", "rssi": -66},
+  "cloud": {"enabled": true, "connected": true},
+  "unixtime": 1791888887,
+  "lux": {"value": 23, "illumination": "twilight", "is_valid": true},
+  "sensor": {"vibration": false, "motion": true, "timestamp": 1791867200, "active": true, "is_valid": true},
+  "bat": {"value": 94, "voltage": 3.817},
+  "charger": false,
+  "sleep_time": 0
+}
