@@ -11,14 +11,24 @@ Org-wide conventions and working rules (PR flow, branch naming `feature/HAS-<n>`
 `organization.md` — this file only covers what is specific to this repo. When opened as
 part of the workspace, those rules apply here too.
 
-## What this library actually is
+## What this library is
 
-Despite the name, it currently ships **only generated model POJOs** — the Java
-representations of what a Shelly device answers and publishes: the Gen1 `/status`, the status
-of the Gen2+ components (also the body of the MQTT `status` topics) and the frames of the RPC
-channel. The list is in the README. There is no Feign/HTTP
-client class today: the OpenAPI generator is configured with `generateApis=false` and
-`generateSupportingFiles=false`, so only the `model` package is produced.
+Three parts, three packages (the README has the API and the usage):
+
+- `model` - **generated** POJOs of what a Shelly device answers and publishes: the Gen1
+  `/status`, the status of the Gen2+ components (also the body of the MQTT `status` topics)
+  and the frames of the RPC channel. Only this package is generated: the OpenAPI generator
+  runs with `generateApis=false`.
+- `http` - hand-written reactive clients on `WebClient`: `ShellyRpcClient` (Gen2+) and
+  `ShellyGen1Client`, with `ShellyHttp` (package-private) holding what they share.
+- `codec` - hand-written: `ShellyTopic`, `ShellyMqttDecoder`, `ShellyEvent`,
+  `ShellyGen1Topic`.
+- `autoconfigure` - the Spring Boot auto-configuration that registers the clients and the
+  decoder (`META-INF/spring/...AutoConfiguration.imports`).
+
+The library was models only up to 1.1.0; 2.0.0 (HAS-227) added the rest, because four
+services were about to write the same clients (the organization's rule for moving code into
+a library).
 
 ## Code generation — read before touching `model/`
 
@@ -79,13 +89,57 @@ Consequences:
   components had none (no gateway of the house has one paired) and are marked as unverified
   in the README - check them against the first device that reports.
 
+## Clients, decoder, auto-configuration - the rules (HAS-227)
+
+- **One chain for every call**: `ShellyHttp.read` and `ShellyHttp.command`. A new method of a
+  client is one line on top of them - do not write a second chain. What they guarantee, and
+  the tests pin: a 2xx whose body is not the model fails (the predicate names the one field
+  the model cannot be without), a refusal carries its status and, from a Gen2+ device, its
+  RPC error, every failure leaves as `ShellyCallException`, the body is always consumed or
+  released, and a whole call is bounded by `ShellyTimeouts.call()`.
+- **A command of the RPC returns `Mono<Void>`** and checks only that the answer is JSON. What
+  a command answers was never read from a device - reading it would have moved something -
+  so no model was written for it. If one is ever needed, read the answer on a device the
+  owner agrees to switch.
+- **`POST /rpc/<Method>` with a JSON body, always a body** (`{}` without parameters): a
+  device refuses a `POST` without a `Content-Length`, and a list has no form in a query that
+  every firmware reads.
+- **`HttpClient.newConnection()`, no pool** - on purpose (a device closes an idle connection
+  after seconds). It also means a test needs no care about pooled connections between
+  `MockWebServer` instances.
+- **The connector of the builder is replaced** (the timeouts live there), the builder is
+  cloned. What a consumer needs on the HTTP client goes through `ShellyHttpClientCustomizer`,
+  applied *before* the timeouts are set. Logbook is the case: the library does not depend on
+  it, the README shows the bean.
+- **The address is validated by a pattern and never echoed when it is not one**
+  (`ShellyAddressException`): it comes from the registry, may be anything, and the message
+  ends in a log. A valid address is in the messages - a LAN address in a log is fine.
+- **The decoder throws for a body that is not its topic's** and answers nothing for a
+  component without a model, without reading the body - most of the 130 messages a minute.
+  A new component: an entry in `STATUSES`, a sample, a line in `statuses()` of the test (the
+  test fails when the two lists differ).
+- **`@ConditionalOnSingleCandidate`, not `@ConditionalOnBean`**, for the builder and the
+  mapper: a service with two of them and no primary must still start.
+- **The two Spring Boot auto-configurations are named by class name** (`afterName`), because
+  their modules are not dependencies. The test runs with the real ones (`spring-boot-webclient`
+  and `spring-boot-jackson`, test scope): if Boot moves a class, a bean goes missing there.
+- **Jackson 3 API**: `tools.jackson`, unchecked `JacksonException`, `JsonNode.isString()` /
+  `stringValue()`, `mapper.rebuild()` to derive a mapper. No `com.fasterxml.jackson.databind`.
+- **No device is ever commanded from a test or from a session.** Reads are fine and were how
+  the clients were checked (`GET /status`, `*.GetStatus`); a command is shown on
+  `mockwebserver3` only.
+
 ## Tests
 
-`src/test` decodes sample payloads (`src/test/resources/samples`: `gen1`, `gen2`, `rpc`) into
-the models, with Jackson 3 - `tools.jackson.core:jackson-databind`, **test scope only**. The
-jar still ships `jackson-annotations` and no databind: the consumers run Jackson 3, and both
-major versions read the `com.fasterxml.jackson.annotation` annotations. Do not move it to the
-compile scope.
+- `model`: sample payloads (`src/test/resources/samples`: `gen1`, `gen2`, `rpc`) decoded into
+  the models with Jackson 3.
+- `http`: the clients against `DeviceStub`, a `mockwebserver3` per test - the request as it
+  is sent, the refusals, bodies that are not the model, a late answer, a broken body, a dead
+  address. The timeouts of the stub are one second, the shortest allowed, so the two
+  timeout cases take a second each.
+- `codec`: the keys the broker of the house showed, on the same samples.
+- `autoconfigure`: `ApplicationContextRunner` with `FilteredClassLoader` for an application
+  without WebFlux, Reactor Netty or Jackson.
 
 - The samples keep the fields a device sends and a model leaves out, on purpose: that a
   reader ignores them is what the models rely on.
@@ -95,9 +149,20 @@ compile scope.
 
 ## Dependencies
 
-Leaf library: depends only on public third-party artifacts (Jackson annotations, Swagger
-annotations, Jakarta annotation/validation, Lombok, JUnit, and Jackson 3 databind for the
-tests). It consumes **no** GitHub
+- **What a consumer gets** (compile scope) is what the models need and nothing more:
+  `jackson-annotations`, `swagger-annotations`, `jakarta.annotation-api`,
+  `jakarta.validation-api`. Keep it that way - `mvn dependency:tree -Dscope=compile`.
+- **`provided`**: `spring-webflux`, `reactor-netty-http`, `netty-transport` (for
+  `ChannelOption`; Reactor Netty brings Netty at runtime scope only), `tools.jackson.core:
+  jackson-databind`, `spring-boot-autoconfigure`. Never `compile`: the consumer brings them,
+  in the versions of its own Boot, and everything using them sits behind a condition of the
+  auto-configuration. `jackson-databind` of Jackson 2 (`com.fasterxml`) stays out altogether.
+- **Versions come from the BOM of Spring Boot** (`spring-boot.version`, imported in
+  `dependencyManagement` - not a parent), so the library is compiled and tested against what
+  a service runs. **It follows the organization's rule for Boot**: when a newer Boot exists,
+  the next task on this library moves the property. An explicit version on something the BOM
+  manages trips `dependencyConvergence`.
+- It consumes **no** GitHub
 Packages libraries — that is why `sonar.yml` has no `maven-settings-xml-action` step and
 needs no `github-prv`/`github-org-smart-home` server credentials.
 
