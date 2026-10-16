@@ -3,8 +3,8 @@
 Shared library (`cloud.cholewa:shelly-client`) in the **smart-home-automation-system**
 workspace. Java 21, Maven, published to GitHub Packages
 (`maven.pkg.github.com/smart-home-automation-system/shelly-client`, pom server id
-`github`). Consumed by `boiler-service`, `heating-service`, `shelly-cloud-service`,
-`water-service`.
+`github`). Consumed by `blinds-service`, `weather-service` (2.x) and `boiler-service`, `heating-service`,
+`shelly-cloud-service`, `water-service` (1.0.0).
 
 Org-wide conventions and working rules (PR flow, branch naming `feature/HAS-<n>`,
 "user writes library code, Claude reviews", public-repo hygiene) live in the workspace
@@ -66,7 +66,8 @@ Consequences:
   `brightness` in the mode color, the measurements on a relay without a meter); `null` has to
   stay apart from off and zero. The generator starts a list or a map empty all the same, and
   the Lombok builder does not (no `@Builder.Default`) - both pinned in
-  `Gen2StatusDecodeTest`.
+  `Gen2StatusDecodeTest`. The same holds for an open map (`status` and `config` of
+  `ShellyComponent`, `params` of `NotifyStatus`): a map the device did not send reads as empty.
 - **A schema without a type does not work here.** OpenAPI spells "any value" that way, and the
   generator then writes `JsonNullable`, a class of a library this one does not have - the
   build fails. `type: object` without properties is what gives `java.lang.Object`
@@ -86,8 +87,10 @@ Consequences:
   API since 1.1.0.
 - **A model is added from a real payload when there is a device**: `GET /status` (Gen1) or
   `GET /rpc/Shelly.GetStatus` (Gen2+) of a device of the kind, read-only. The Bluetooth
-  components had none (no gateway of the house has one paired) and are marked as unverified
-  in the README - check them against the first device that reports.
+  components were checked on the gateway of the weather station (Plug S Gen3, 2.1.0, HAS-236).
+- **The dynamic components are not in `Shelly.GetStatus`** (`bthomedevice`, `bthomesensor`,
+  the virtual ones): `Shelly.GetComponents` with `dynamic_only` lists them, a page at a time
+  (11 on that plug) - `dynamicComponents` reads every page.
 
 ## Clients, decoder, auto-configuration - the rules (HAS-227)
 

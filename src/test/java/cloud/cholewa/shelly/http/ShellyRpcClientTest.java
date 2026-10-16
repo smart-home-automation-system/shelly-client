@@ -3,6 +3,7 @@ package cloud.cholewa.shelly.http;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import cloud.cholewa.shelly.model.CoverStatus;
+import cloud.cholewa.shelly.model.ShellyComponent;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Stream;
@@ -159,6 +160,131 @@ class ShellyRpcClientTest {
         }).verifyComplete();
 
         assertThat(device.asked().getUrl().encodedPath()).isEqualTo("/rpc/Shelly.GetStatus");
+    }
+
+    @Test
+    void shouldReadTheConfigurationOfABluetoothDevice() {
+        device.answersSample("gen2/bthomedevice-config.json");
+
+        sut.bthomeDeviceConfig(device.address(), 200).as(StepVerifier::create)
+            .assertNext(config -> assertThat(config.getAddr()).isEqualTo("00:00:5e:00:53:02")).verifyComplete();
+
+        RecordedRequest config = device.asked();
+        assertThat(config.getUrl().encodedPath()).isEqualTo("/rpc/BTHomeDevice.GetConfig");
+        assertThat(config.getBody().utf8()).isEqualTo("{\"id\":200}");
+    }
+
+    // a device answers a page at a time: the next one is asked from where the last one ended
+    @Test
+    void shouldReadEveryPageOfTheDynamicComponents() {
+        device.answersSample("rpc/components-page-1.json");
+        device.answersSample("rpc/components-page-2.json");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .assertNext(components -> assertThat(components).extracting(ShellyComponent::getKey)
+                .containsExactly("bthomedevice:200", "bthomesensor:200", "bthomesensor:201"))
+            .verifyComplete();
+
+        RecordedRequest first = device.asked();
+        assertThat(first.getUrl().encodedPath()).isEqualTo("/rpc/Shelly.GetComponents");
+        assertThat(first.getBody().utf8()).isEqualTo("{\"dynamic_only\":true,\"include\":[\"status\",\"config\"],\"offset\":0}");
+        assertThat(device.asked().getBody().utf8()).isEqualTo("{\"dynamic_only\":true,\"include\":[\"status\",\"config\"],\"offset\":2}");
+        assertThat(device.calls()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldReadADeviceWithoutDynamicComponentsAsNone() {
+        device.answersJson("{\"components\":[],\"cfg_rev\":26,\"offset\":0,\"total\":0}");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .assertNext(components -> assertThat(components).isEmpty()).verifyComplete();
+        assertThat(device.calls()).isEqualTo(1);
+    }
+
+    // half a list would read as components that are not there; an empty page before the total
+    // would otherwise ask for the same page for ever
+    @Test
+    void shouldFailTheWholeReadWhenAPageFails() {
+        device.answersSample("rpc/components-page-1.json");
+        device.answers(500, "application/json", "{\"code\":-1,\"message\":\"busy\"}");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectError(ShellyCallException.class).verify();
+        assertThat(device.calls()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldFailOnAnEmptyPageBeforeTheTotal() {
+        device.answersJson("{\"components\":[],\"cfg_rev\":26,\"offset\":0,\"total\":3}");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(ShellyCallException.class)
+                .hasMessageContaining("an empty page at 0 of 3"))
+            .verify();
+        assertThat(device.calls()).isEqualTo(1);
+    }
+
+    // a firmware that ignores the offset answers the first page again - asked for ever otherwise
+    @Test
+    void shouldFailOnAPageThatStartsElsewhereThanAsked() {
+        device.answersSample("rpc/components-page-1.json");
+        device.answersSample("rpc/components-page-1.json");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(ShellyCallException.class)
+                .hasMessageContaining("asked for the page at 2, answered 0"))
+            .verify();
+        assertThat(device.calls()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldFailWhenTheConfigurationChangesBetweenTwoPages() {
+        device.answersSample("rpc/components-page-1.json");
+        device.answersJson(DeviceStub.sample("rpc/components-page-2.json").replace("\"cfg_rev\": 27", "\"cfg_rev\": 28"));
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(ShellyCallException.class)
+                .hasMessageContaining("the configuration changed between two pages"))
+            .verify();
+    }
+
+    @Test
+    void shouldFailWhenTheTotalChangesBetweenTwoPages() {
+        device.answersSample("rpc/components-page-1.json");
+        device.answersJson(DeviceStub.sample("rpc/components-page-2.json").replace("\"total\": 3", "\"total\": 4"));
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectErrorSatisfies(e -> assertThat(e).hasMessageContaining("the configuration changed between two pages"))
+            .verify();
+    }
+
+    // a device that claims more would be asked page after page
+    @Test
+    void shouldRefuseMoreComponentsThanTheLimit() {
+        device.answersJson("{\"components\":[{\"key\":\"number:200\"}],\"cfg_rev\":1,\"offset\":0,\"total\":10000}");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(ShellyCallException.class)
+                .hasMessageContaining("10000 components, more than 256"))
+            .verify();
+        assertThat(device.calls()).isEqualTo(1);
+    }
+
+    // without cfg_rev a change between two pages could not be seen
+    @Test
+    void shouldFailAPageWithoutTheRevisionOfTheConfiguration() {
+        device.answersJson("{\"components\":[],\"offset\":0,\"total\":0}");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectError(ShellyCallException.class).verify();
+    }
+
+    @Test
+    void shouldFailAPageThatIsNotTheModel() {
+        device.answersJson("{\"components\":[]}");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectError(ShellyCallException.class).verify();
     }
 
     @Test
