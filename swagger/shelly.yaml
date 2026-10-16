@@ -598,6 +598,50 @@ components:
         name:
           type: string
 
+    BthomeDeviceConfig:
+      description: The configuration of the component bthomedevice - the Bluetooth device a gateway has adopted.
+      type: object
+      properties:
+        id:
+          type: integer
+        addr:
+          description: The Bluetooth address of the device.
+          type: string
+        name:
+          type: string
+    ShellyComponent:
+      description: >-
+        One component as Shelly.GetComponents lists it - its key with its status and its config, each
+        as a raw map, since what they hold differs by the type of the component. The dynamic components
+        (bthomedevice, bthomesensor, the virtual ones) are listed only here: Shelly.GetStatus leaves them out.
+      type: object
+      properties:
+        key:
+          description: The type and the id of the component, bthomesensor:200.
+          type: string
+        status:
+          type: object
+          additionalProperties: true
+        config:
+          type: object
+          additionalProperties: true
+    ShellyComponentsPage:
+      description: >-
+        One answer of Shelly.GetComponents. A device answers a few components at a time (11 on a Plug S
+        Gen3 with firmware 2.1.0); offset is the position of the first one, total how many there are.
+      type: object
+      properties:
+        components:
+          type: array
+          items:
+            $ref: '#/components/schemas/ShellyComponent'
+        cfg_rev:
+          type: integer
+        offset:
+          type: integer
+        total:
+          type: integer
+
     # ---------------------------------------------------------------------------------------
     # Gen2 and later - the frames of the RPC channel
     # ---------------------------------------------------------------------------------------

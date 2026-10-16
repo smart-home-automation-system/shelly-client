@@ -194,6 +194,32 @@ class Gen2StatusDecodeTest {
         assertEquals("Outside temperature", config.getName());
     }
 
+    @Test
+    void shouldDecodeTheConfigurationOfABluetoothDevice() {
+        BthomeDeviceConfig config = Samples.decode("gen2/bthomedevice-config.json", BthomeDeviceConfig.class);
+
+        assertEquals(200, config.getId());
+        assertEquals("00:00:5e:00:53:02", config.getAddr());
+        assertEquals("Weather station", config.getName());
+    }
+
+    // the shape a Plug S Gen3 (2.1.0) answered with a weather station paired (HAS-236): the status
+    // and the config of every dynamic component as raw maps, the attrs left out
+    @Test
+    void shouldDecodeAPageOfTheComponents() {
+        ShellyComponentsPage page = Samples.decode("rpc/components-page-1.json", ShellyComponentsPage.class);
+
+        assertEquals(0, page.getOffset());
+        assertEquals(3, page.getTotal());
+        assertEquals(27, page.getCfgRev());
+        assertEquals(2, page.getComponents().size());
+        ShellyComponent sensor = page.getComponents().get(1);
+        assertEquals("bthomesensor:200", sensor.getKey());
+        assertEquals(1, sensor.getConfig().get("obj_id"));
+        assertEquals("00:00:5e:00:53:02", sensor.getConfig().get("addr"));
+        assertEquals(100, sensor.getStatus().get("value"));
+    }
+
     // "Not sent" has to stay apart from "off" and from zero: nothing has a default.
     @Test
     void shouldLeaveWhatADeviceDoesNotSendUnset() {
@@ -217,6 +243,14 @@ class Gen2StatusDecodeTest {
         SwitchStatus output = Samples.decodeText("{}", SwitchStatus.class);
         assertNull(output.getOutput());
         assertNull(output.getApower());
+
+        BthomeDeviceConfig device = Samples.decodeText("{}", BthomeDeviceConfig.class);
+        assertNull(device.getId());
+        assertNull(device.getAddr());
+
+        ShellyComponentsPage page = Samples.decodeText("{}", ShellyComponentsPage.class);
+        assertNull(page.getOffset());
+        assertNull(page.getTotal());
     }
 
     // The one exception: a list. The generator starts it empty, so a list a device did not

@@ -1,10 +1,13 @@
 package cloud.cholewa.shelly.http;
 
+import cloud.cholewa.shelly.model.BthomeDeviceConfig;
 import cloud.cholewa.shelly.model.BthomeSensorConfig;
 import cloud.cholewa.shelly.model.BthomeSensorStatus;
 import cloud.cholewa.shelly.model.CoverStatus;
 import cloud.cholewa.shelly.model.Gen2LightStatus;
 import cloud.cholewa.shelly.model.RgbwStatus;
+import cloud.cholewa.shelly.model.ShellyComponent;
+import cloud.cholewa.shelly.model.ShellyComponentsPage;
 import cloud.cholewa.shelly.model.SwitchStatus;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -164,6 +167,45 @@ public class ShellyRpcClient {
     public Mono<BthomeSensorStatus> bthomeSensorStatus(String address, int id) {
         return read(address, "BTHomeSensor.GetStatus", params(id), BthomeSensorStatus.class,
             status -> status.getId() != null);
+    }
+
+    public Mono<BthomeDeviceConfig> bthomeDeviceConfig(String address, int id) {
+        return read(address, "BTHomeDevice.GetConfig", params(id), BthomeDeviceConfig.class,
+            config -> config.getId() != null);
+    }
+
+    /**
+     * {@code Shelly.GetComponents} with {@code dynamic_only}: every dynamic component of the device
+     * ({@code bthomedevice}, {@code bthomesensor}, the virtual ones) with its status and its
+     * config - the components {@code Shelly.GetStatus} leaves out. The device answers a page at a
+     * time; the pages are read one after the other, and a page that is not the model, or one
+     * that brings nothing before the total is reached, fails the whole read: half a list would
+     * read as components that are not there.
+     */
+    public Mono<List<ShellyComponent>> dynamicComponents(String address) {
+        return componentsPage(address, 0)
+            .expand(page -> {
+                int next = page.getOffset() + page.getComponents().size();
+                if (next >= page.getTotal()) {
+                    return Mono.empty();
+                }
+                if (page.getComponents().isEmpty()) {
+                    return Mono.error(new ShellyCallException(
+                        "Shelly.GetComponents of " + address + ": an empty page at " + page.getOffset()
+                            + " of " + page.getTotal()));
+                }
+                return componentsPage(address, next);
+            })
+            .concatMapIterable(ShellyComponentsPage::getComponents)
+            .collectList();
+    }
+
+    private Mono<ShellyComponentsPage> componentsPage(String address, int offset) {
+        Map<String, Object> params = new LinkedHashMap<>();
+        params.put("dynamic_only", true);
+        params.put("offset", offset);
+        return read(address, "Shelly.GetComponents", params, ShellyComponentsPage.class,
+            page -> page.getOffset() != null && page.getTotal() != null && page.getComponents() != null);
     }
 
     /**

@@ -30,8 +30,8 @@ devices:
 
 See [Usage](#usage) for what a service has to bring itself.
 
-Current consumers: `boiler-service`, `heating-service`, `shelly-cloud-service`,
-`water-service`.
+Current consumers: `blinds-service`, `weather-service` (2.x); `boiler-service`, `heating-service`,
+`shelly-cloud-service`, `water-service` (1.0.0).
 
 ## Installation
 
@@ -85,7 +85,8 @@ The body of the MQTT topic `<device id>/status/<component>:<id>`, and the answer
 | `PresenceStatus` | `presencezone` | One zone of a Presence Gen4: `value` (somebody is there), `num_objects`. |
 | `IlluminanceStatus` | `illuminance` | `illumination` (`dark` / `twilight` / `bright`) and, where the device measures it, `lux`. |
 | `TemperatureStatus`, `HumidityStatus`, `DevicePowerStatus` | `temperature`, `humidity`, `devicepower` | What a battery thermometer (H&T) publishes when it wakes. |
-| `BthomeDeviceStatus`, `BthomeSensorStatus`, `BthomeSensorConfig` | `bthomedevice`, `bthomesensor` | A Bluetooth device paired with a gateway, one value it reports, and which value that is. **Written from the documentation of Shelly, not checked on a device.** |
+| `BthomeDeviceStatus`, `BthomeDeviceConfig`, `BthomeSensorStatus`, `BthomeSensorConfig` | `bthomedevice`, `bthomesensor` | A Bluetooth device paired with a gateway and its address, one value it reports, and which value that is. Checked on a Plug S Gen3 (2.1.0) with a WS90 paired (HAS-236): a sensor is published only when its value changes; `last_updated_ts` and `value` are `0` and `null` until the gateway has heard the object once. |
+| `ShellyComponentsPage`, `ShellyComponent` | - (an RPC answer) | One page of `Shelly.GetComponents`: each component with its `key` and its `status` and `config` as raw maps. |
 | `ShellyPro4StatusResponse` | `switch` | The older model of a switch (since 0.0.x): its measurements are integers, so a decimal is cut off. New code reads `SwitchStatus`. |
 
 `source` says what caused the last change: `init` is a restart of the device, not somebody
@@ -189,7 +190,8 @@ class BlindsActuator {
 | `switchSet`, `lightSet`, `lightToggle`, `rgbSet`, `rgbwSet` | `Mono<Void>`; a parameter left `null` is not sent, and the device leaves that part as it is |
 | `coverStatus`, `switchStatus`, `lightStatus`, `rgbStatus`, `rgbwStatus` | the model of the component |
 | `status` | `Shelly.GetStatus`: every component under its key (`switch:0`, `sys`), each a raw map |
-| `bthomeSensorConfig`, `bthomeSensorStatus`, `webhookListSupported` | the model, and a raw map |
+| `bthomeSensorConfig`, `bthomeSensorStatus`, `bthomeDeviceConfig`, `webhookListSupported` | the model, and a raw map |
+| `dynamicComponents` | `Shelly.GetComponents` with `dynamic_only`: every dynamic component (`bthomedevice`, `bthomesensor`, the virtual ones - `Shelly.GetStatus` leaves them out), all pages read one after the other; a failed page fails the whole list |
 
 | `ShellyGen1Client` (Gen1, `GET` with the command in the query) | |
 |---|---|
