@@ -251,6 +251,10 @@ class Gen2StatusDecodeTest {
         ShellyComponentsPage page = Samples.decodeText("{}", ShellyComponentsPage.class);
         assertNull(page.getOffset());
         assertNull(page.getTotal());
+        assertNull(page.getCfgRev());
+
+        ShellyComponent component = Samples.decodeText("{}", ShellyComponent.class);
+        assertNull(component.getKey());
     }
 
     // The one exception: a list. The generator starts it empty, so a list a device did not
@@ -260,6 +264,10 @@ class Gen2StatusDecodeTest {
         assertTrue(Samples.decodeText("{}", RgbwStatus.class).getRgb().isEmpty());
         assertTrue(Samples.decodeText("{}", CoverStatus.class).getErrors().isEmpty());
         assertTrue(Samples.decodeText("{}", EnergyCounter.class).getByMinute().isEmpty());
+        assertTrue(Samples.decodeText("{}", ShellyComponentsPage.class).getComponents().isEmpty());
+        // ...and a map: a component listed without its status or config reads as an empty one
+        assertTrue(Samples.decodeText("{}", ShellyComponent.class).getStatus().isEmpty());
+        assertTrue(Samples.decodeText("{}", ShellyComponent.class).getConfig().isEmpty());
     }
 
     // ...and only for a model that was decoded or made with new: the builder leaves a list it

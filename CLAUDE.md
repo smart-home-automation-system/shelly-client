@@ -66,7 +66,8 @@ Consequences:
   `brightness` in the mode color, the measurements on a relay without a meter); `null` has to
   stay apart from off and zero. The generator starts a list or a map empty all the same, and
   the Lombok builder does not (no `@Builder.Default`) - both pinned in
-  `Gen2StatusDecodeTest`.
+  `Gen2StatusDecodeTest`. The same holds for an open map (`status` and `config` of
+  `ShellyComponent`, `params` of `NotifyStatus`): a map the device did not send reads as empty.
 - **A schema without a type does not work here.** OpenAPI spells "any value" that way, and the
   generator then writes `JsonNullable`, a class of a library this one does not have - the
   build fails. `type: object` without properties is what gives `java.lang.Object`

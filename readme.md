@@ -191,7 +191,7 @@ class BlindsActuator {
 | `coverStatus`, `switchStatus`, `lightStatus`, `rgbStatus`, `rgbwStatus` | the model of the component |
 | `status` | `Shelly.GetStatus`: every component under its key (`switch:0`, `sys`), each a raw map |
 | `bthomeSensorConfig`, `bthomeSensorStatus`, `bthomeDeviceConfig`, `webhookListSupported` | the model, and a raw map |
-| `dynamicComponents` | `Shelly.GetComponents` with `dynamic_only`: every dynamic component (`bthomedevice`, `bthomesensor`, the virtual ones - `Shelly.GetStatus` leaves them out), all pages read one after the other; a failed page fails the whole list |
+| `dynamicComponents` | `Shelly.GetComponents` with `dynamic_only`: every dynamic component (`bthomedevice`, `bthomesensor`, the virtual ones - `Shelly.GetStatus` leaves them out), status and config asked for by name, all pages read one after the other, at most 256 components; a failed page, a page that starts elsewhere than asked, or a change of `cfg_rev` or of the total between two pages fails the whole list |
 
 | `ShellyGen1Client` (Gen1, `GET` with the command in the query) | |
 |---|---|

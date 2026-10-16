@@ -187,8 +187,8 @@ class ShellyRpcClientTest {
 
         RecordedRequest first = device.asked();
         assertThat(first.getUrl().encodedPath()).isEqualTo("/rpc/Shelly.GetComponents");
-        assertThat(first.getBody().utf8()).isEqualTo("{\"dynamic_only\":true,\"offset\":0}");
-        assertThat(device.asked().getBody().utf8()).isEqualTo("{\"dynamic_only\":true,\"offset\":2}");
+        assertThat(first.getBody().utf8()).isEqualTo("{\"dynamic_only\":true,\"include\":[\"status\",\"config\"],\"offset\":0}");
+        assertThat(device.asked().getBody().utf8()).isEqualTo("{\"dynamic_only\":true,\"include\":[\"status\",\"config\"],\"offset\":2}");
         assertThat(device.calls()).isEqualTo(2);
     }
 
@@ -210,6 +210,7 @@ class ShellyRpcClientTest {
 
         sut.dynamicComponents(device.address()).as(StepVerifier::create)
             .expectError(ShellyCallException.class).verify();
+        assertThat(device.calls()).isEqualTo(2);
     }
 
     @Test
@@ -221,6 +222,61 @@ class ShellyRpcClientTest {
                 .hasMessageContaining("an empty page at 0 of 3"))
             .verify();
         assertThat(device.calls()).isEqualTo(1);
+    }
+
+    // a firmware that ignores the offset answers the first page again - asked for ever otherwise
+    @Test
+    void shouldFailOnAPageThatStartsElsewhereThanAsked() {
+        device.answersSample("rpc/components-page-1.json");
+        device.answersSample("rpc/components-page-1.json");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(ShellyCallException.class)
+                .hasMessageContaining("asked for the page at 2, answered 0"))
+            .verify();
+        assertThat(device.calls()).isEqualTo(2);
+    }
+
+    @Test
+    void shouldFailWhenTheConfigurationChangesBetweenTwoPages() {
+        device.answersSample("rpc/components-page-1.json");
+        device.answersJson(DeviceStub.sample("rpc/components-page-2.json").replace("\"cfg_rev\": 27", "\"cfg_rev\": 28"));
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(ShellyCallException.class)
+                .hasMessageContaining("the configuration changed between two pages"))
+            .verify();
+    }
+
+    @Test
+    void shouldFailWhenTheTotalChangesBetweenTwoPages() {
+        device.answersSample("rpc/components-page-1.json");
+        device.answersJson(DeviceStub.sample("rpc/components-page-2.json").replace("\"total\": 3", "\"total\": 4"));
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectErrorSatisfies(e -> assertThat(e).hasMessageContaining("the configuration changed between two pages"))
+            .verify();
+    }
+
+    // a device that claims more would be asked page after page
+    @Test
+    void shouldRefuseMoreComponentsThanTheLimit() {
+        device.answersJson("{\"components\":[{\"key\":\"number:200\"}],\"cfg_rev\":1,\"offset\":0,\"total\":10000}");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectErrorSatisfies(e -> assertThat(e).isInstanceOf(ShellyCallException.class)
+                .hasMessageContaining("10000 components, more than 256"))
+            .verify();
+        assertThat(device.calls()).isEqualTo(1);
+    }
+
+    // without cfg_rev a change between two pages could not be seen
+    @Test
+    void shouldFailAPageWithoutTheRevisionOfTheConfiguration() {
+        device.answersJson("{\"components\":[],\"offset\":0,\"total\":0}");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create)
+            .expectError(ShellyCallException.class).verify();
     }
 
     @Test

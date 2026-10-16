@@ -177,35 +177,66 @@ public class ShellyRpcClient {
     /**
      * {@code Shelly.GetComponents} with {@code dynamic_only}: every dynamic component of the device
      * ({@code bthomedevice}, {@code bthomesensor}, the virtual ones) with its status and its
-     * config - the components {@code Shelly.GetStatus} leaves out. The device answers a page at a
-     * time; the pages are read one after the other, and a page that is not the model, or one
-     * that brings nothing before the total is reached, fails the whole read: half a list would
-     * read as components that are not there.
+     * config - the components {@code Shelly.GetStatus} leaves out. The status and the config are
+     * asked for by name ({@code include}): without it a firmware may answer the keys alone. The
+     * device answers a page at a time; the pages are read one after the other, at most
+     * {@value #MAX_COMPONENTS} components. The whole read fails - half a list would read as
+     * components that are not there - on a page that is not the model, one that starts elsewhere
+     * than asked (a firmware that ignored the offset would be asked for the same page for ever),
+     * one that brings nothing before the total is reached, a total above the limit, and a change
+     * of the configuration ({@code cfg_rev}) or of the total between two pages.
      */
     public Mono<List<ShellyComponent>> dynamicComponents(String address) {
         return componentsPage(address, 0)
+            .flatMap(first -> checked(address, null, first, 0))
             .expand(page -> {
                 int next = page.getOffset() + page.getComponents().size();
                 if (next >= page.getTotal()) {
                     return Mono.empty();
                 }
-                if (page.getComponents().isEmpty()) {
-                    return Mono.error(new ShellyCallException(
-                        "Shelly.GetComponents of " + address + ": an empty page at " + page.getOffset()
-                            + " of " + page.getTotal()));
-                }
-                return componentsPage(address, next);
+                return componentsPage(address, next).flatMap(following -> checked(address, page, following, next));
             })
             .concatMapIterable(ShellyComponentsPage::getComponents)
             .collectList();
     }
 
+    // the most dynamic components a read takes: a gateway holds a few dozen, and a device that
+    // claims more would be asked page after page
+    static final int MAX_COMPONENTS = 256;
+
+    // every rule of a page in one place: where it starts, what it brings, and that it belongs to
+    // the same list as the page before it (null for the first)
+    private static Mono<ShellyComponentsPage> checked(String address, ShellyComponentsPage previous,
+            ShellyComponentsPage page, int offset) {
+        if (!Integer.valueOf(offset).equals(page.getOffset())) {
+            return Mono.error(pagingFailed(address, "asked for the page at " + offset + ", answered " + page.getOffset()));
+        }
+        if (page.getTotal() > MAX_COMPONENTS) {
+            return Mono.error(pagingFailed(address, page.getTotal() + " components, more than " + MAX_COMPONENTS));
+        }
+        if (previous != null && (!previous.getCfgRev().equals(page.getCfgRev())
+            || !previous.getTotal().equals(page.getTotal()))) {
+            return Mono.error(pagingFailed(address, "the configuration changed between two pages"));
+        }
+        if (page.getComponents().isEmpty() && page.getTotal() > offset) {
+            return Mono.error(pagingFailed(address, "an empty page at " + offset + " of " + page.getTotal()));
+        }
+        return Mono.just(page);
+    }
+
+    // cfg_rev is required: without it a change between two pages could not be seen. A list the
+    // device did not send starts empty in the generated model; null is a list sent as null
     private Mono<ShellyComponentsPage> componentsPage(String address, int offset) {
         Map<String, Object> params = new LinkedHashMap<>();
         params.put("dynamic_only", true);
+        params.put("include", List.of("status", "config"));
         params.put("offset", offset);
         return read(address, "Shelly.GetComponents", params, ShellyComponentsPage.class,
-            page -> page.getOffset() != null && page.getTotal() != null && page.getComponents() != null);
+            page -> page.getTotal() != null && page.getCfgRev() != null && page.getComponents() != null);
+    }
+
+    private static ShellyCallException pagingFailed(String address, String why) {
+        return new ShellyCallException("Shelly.GetComponents of " + address + ": " + why);
     }
 
     /**
