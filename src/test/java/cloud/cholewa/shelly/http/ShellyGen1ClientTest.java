@@ -178,6 +178,30 @@ class ShellyGen1ClientTest {
         assertThat(device.asked().getUrl().encodedPath()).isEqualTo("/status");
     }
 
+    // a reading the meter does not hold is an answer, judged by the caller
+    @Test
+    void shouldReadTheMeterOfAPlug() {
+        device.answersSample("gen1/plug-meter.json");
+
+        sut.meter(device.address(), 0).as(StepVerifier::create)
+            .assertNext(meter -> assertThat(meter.getPower()).isEqualTo(482.27)).verifyComplete();
+        RecordedRequest request = device.asked();
+        assertThat(request.getUrl().encodedPath()).isEqualTo("/meter/0");
+        assertThat(request.getUrl().query()).isNull();
+
+        device.answersJson("{\"power\":0.00,\"is_valid\":false,\"total\":0}");
+        sut.meter(device.address(), 0).as(StepVerifier::create)
+            .assertNext(meter -> assertThat(meter.getIsValid()).isFalse()).verifyComplete();
+    }
+
+    // JSON without is_valid is not the meter - a relay answered, or a page of another device
+    @Test
+    void shouldFailAMeterAnswerThatIsNotOne() {
+        device.answersJson(RELAY);
+
+        sut.meter(device.address(), 0).as(StepVerifier::create).expectError(ShellyCallException.class).verify();
+    }
+
     // A Gen1 device refuses in plain text - "Not Found" for a roller it does not have.
     @Test
     void shouldTellARefusalByItsStatus() {

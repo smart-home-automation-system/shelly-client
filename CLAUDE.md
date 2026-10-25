@@ -4,7 +4,7 @@ Shared library (`cloud.cholewa:shelly-client`) in the **smart-home-automation-sy
 workspace. Java 21, Maven, published to GitHub Packages
 (`maven.pkg.github.com/smart-home-automation-system/shelly-client`, pom server id
 `github`). Consumed by `blinds-service`, `weather-service` (2.x) and `boiler-service`, `heating-service`,
-`shelly-cloud-service`, `water-service` (1.0.0).
+`shelly-cloud-service`, `water-service` (1.0.0); `appliance-service` reads the Gen1 meter (2.2.0, HAS-278).
 
 Org-wide conventions and working rules (PR flow, branch naming `feature/HAS-<n>`,
 "user writes library code, Claude reviews", public-repo hygiene) live in the workspace
