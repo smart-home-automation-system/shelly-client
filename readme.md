@@ -138,7 +138,7 @@ Three parts, in three packages:
 **Spring WebFlux, Reactor Netty, Jackson 3 databind and Spring Boot's auto-configure are
 `provided` dependencies of this library**: it is compiled against them and does not hand them
 on. A service gets them from its own starters, in the versions of its own Spring Boot; the
-library is built and tested against the BOM of Spring Boot 4.1.1. A consumer without them
+library is built and tested against the BOM of Spring Boot 4.1.2. A consumer without them
 still gets the models, and nothing fails.
 
 **The library registers its beans by itself** (a Spring Boot auto-configuration), each only
@@ -199,6 +199,7 @@ class BlindsActuator {
 | `light`, `lightToggle`, `lightStatus` (`/light`: a bulb, a Duo) | `Gen1LightStatus` |
 | `color`, `colorStatus` (`/color`: an RGBW2 in the mode color) | `Gen1LightStatus` |
 | `relay`, `relayStatus` | `Relay` |
+| `meter` (`/meter/0`: the power meter of a plug) | `Gen1Meter` - an answer with `is_valid: false` is one, judged by the caller |
 | `status`, `motionStatus` (`/status`) | `Gen1DeviceStatus`, `MotionStatus` |
 
 What a caller has to know:

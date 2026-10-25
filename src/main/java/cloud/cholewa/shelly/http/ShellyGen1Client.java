@@ -2,6 +2,7 @@ package cloud.cholewa.shelly.http;
 
 import cloud.cholewa.shelly.model.Gen1DeviceStatus;
 import cloud.cholewa.shelly.model.Gen1LightStatus;
+import cloud.cholewa.shelly.model.Gen1Meter;
 import cloud.cholewa.shelly.model.MotionStatus;
 import cloud.cholewa.shelly.model.Relay;
 import cloud.cholewa.shelly.model.RollerStatus;
@@ -41,6 +42,7 @@ public class ShellyGen1Client {
     private static final Predicate<RollerStatus> IS_ROLLER = roller -> roller.getState() != null;
     private static final Predicate<Gen1LightStatus> IS_LIGHT = light -> light.getIson() != null;
     private static final Predicate<Relay> IS_RELAY = relay -> relay.getIson() != null;
+    private static final Predicate<Gen1Meter> IS_METER = meter -> meter.getIsValid() != null;
 
     private final ShellyHttp http;
 
@@ -143,6 +145,15 @@ public class ShellyGen1Client {
 
     public Mono<Relay> relayStatus(String address, int index) {
         return get(address, "/relay/" + index, Map.of(), Relay.class, IS_RELAY);
+    }
+
+    /**
+     * {@code GET /meter/0} - the power meter of a plug. An answer is one with {@code is_valid}:
+     * every meter says whether its reading holds, and a reading that does not ({@code false})
+     * is an answer the caller judges, not a failed call.
+     */
+    public Mono<Gen1Meter> meter(String address, int index) {
+        return get(address, "/meter/" + index, Map.of(), Gen1Meter.class, IS_METER);
     }
 
     private <T> Mono<T> get(String address, String path, Map<String, ?> query, Class<T> model,

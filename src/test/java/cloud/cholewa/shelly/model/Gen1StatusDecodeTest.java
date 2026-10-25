@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -112,6 +113,19 @@ class Gen1StatusDecodeTest {
     }
 
     // "Not sent" has to stay apart from "off" and from zero: nothing has a default.
+    // GET /meter/0 of a Plug S: the energy in watt-minutes, the overpower a draw and not a flag
+    @Test
+    void shouldDecodeTheMeterOfAPlug() {
+        Gen1Meter meter = Samples.decode("gen1/plug-meter.json", Gen1Meter.class);
+
+        assertEquals(482.27, meter.getPower());
+        assertEquals(0.0, meter.getOverpower());
+        assertTrue(meter.getIsValid());
+        assertEquals(1790000000L, meter.getTimestamp());
+        assertEquals(List.of(480.512, 479.903, 391.041), meter.getCounters());
+        assertEquals(123456L, meter.getTotal());
+    }
+
     @Test
     void shouldLeaveWhatADeviceDoesNotSendUnset() {
         RollerStatus roller = Samples.decodeText("{}", RollerStatus.class);
@@ -128,5 +142,11 @@ class Gen1StatusDecodeTest {
         assertNull(motion.getSensor());
         assertNull(motion.getLux());
         assertNull(motion.getBat());
+
+        Gen1Meter meter = Samples.decodeText("{}", Gen1Meter.class);
+        assertNull(meter.getPower());
+        assertNull(meter.getIsValid());
+        assertNull(meter.getTotal());
+        assertTrue(meter.getCounters().isEmpty());
     }
 }

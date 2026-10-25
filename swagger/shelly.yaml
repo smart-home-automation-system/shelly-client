@@ -217,6 +217,39 @@ components:
           format: double
         overpower:
           type: boolean
+    Gen1Meter:
+      description: >-
+        The power meter of a Gen1 device - the answer of GET /meter/0 of a Shelly Plug S
+        (firmware 1.14.0), read by appliance-service (HAS-278).
+      type: object
+      properties:
+        power:
+          description: The draw now, in watts
+          type: number
+          format: double
+        overpower:
+          description: The draw at which the device switched itself off for overpower, 0 when it did not
+          type: number
+          format: double
+        is_valid:
+          description: false while the meter has no valid reading - such a sample says nothing of the draw
+          type: boolean
+        timestamp:
+          description: >-
+            The time of the device when it answered, in seconds - the local time of the device
+            written as if it were UTC, not a Unix time
+          type: integer
+          format: int64
+        counters:
+          description: The energy of each of the last three whole minutes, in watt-minutes, the newest first
+          type: array
+          items:
+            type: number
+            format: double
+        total:
+          description: The energy since the device was last restarted, in watt-minutes - it starts again at 0 after a restart
+          type: integer
+          format: int64
     MotionStatus:
       description: The parts of GET /status of a Shelly Motion (Gen1) the house reads.
       type: object
