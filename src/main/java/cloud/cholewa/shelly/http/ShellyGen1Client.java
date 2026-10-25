@@ -148,9 +148,9 @@ public class ShellyGen1Client {
     }
 
     /**
-     * {@code GET /meter/0} - the power meter of a plug. An answer is one with {@code is_valid}:
-     * every meter says whether its reading holds, and a reading that does not ({@code false})
-     * is an answer the caller judges, not a failed call.
+     * {@code GET /meter/<index>} - the power meter of a plug, index 0 for a Plug S. An answer is
+     * one with {@code is_valid}: every meter says whether its reading holds, and a reading that
+     * does not ({@code false}) is an answer the caller judges, not a failed call.
      */
     public Mono<Gen1Meter> meter(String address, int index) {
         return get(address, "/meter/" + index, Map.of(), Gen1Meter.class, IS_METER);

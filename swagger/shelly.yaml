@@ -228,7 +228,10 @@ components:
           type: number
           format: double
         overpower:
-          description: The draw at which the device switched itself off for overpower, 0 when it did not
+          description: >-
+            The draw at which the device switched itself off for overpower, 0 when it did not - a
+            number in the meter of a Plug S, while relay and light report overpower as a boolean;
+            a device whose meter sends the boolean fails the decode
           type: number
           format: double
         is_valid:

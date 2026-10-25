@@ -112,7 +112,6 @@ class Gen1StatusDecodeTest {
         assertEquals(3.817, status.getBat().getVoltage());
     }
 
-    // "Not sent" has to stay apart from "off" and from zero: nothing has a default.
     // GET /meter/0 of a Plug S: the energy in watt-minutes, the overpower a draw and not a flag
     @Test
     void shouldDecodeTheMeterOfAPlug() {
@@ -126,6 +125,7 @@ class Gen1StatusDecodeTest {
         assertEquals(123456L, meter.getTotal());
     }
 
+    // "Not sent" has to stay apart from "off" and from zero: nothing has a default.
     @Test
     void shouldLeaveWhatADeviceDoesNotSendUnset() {
         RollerStatus roller = Samples.decodeText("{}", RollerStatus.class);
