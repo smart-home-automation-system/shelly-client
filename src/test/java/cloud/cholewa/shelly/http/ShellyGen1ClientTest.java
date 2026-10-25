@@ -197,7 +197,7 @@ class ShellyGen1ClientTest {
     // JSON without is_valid is not the meter - a relay answered, or a page of another device
     @Test
     void shouldFailAMeterAnswerThatIsNotOne() {
-        device.answersJson(RELAY);
+        device.answersJson("{\"ison\":true,\"source\":\"http\"}");
 
         sut.meter(device.address(), 0).as(StepVerifier::create).expectError(ShellyCallException.class).verify();
     }
