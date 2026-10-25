@@ -31,7 +31,7 @@ devices:
 See [Usage](#usage) for what a service has to bring itself.
 
 Current consumers: `blinds-service`, `weather-service` (2.x); `boiler-service`, `heating-service`,
-`shelly-cloud-service`, `water-service` (1.0.0).
+`shelly-cloud-service`, `water-service` (1.0.0); `appliance-service` (2.2.0 - the Gen1 meter).
 
 ## Installation
 
