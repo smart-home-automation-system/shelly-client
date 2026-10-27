@@ -4,6 +4,8 @@ import cloud.cholewa.shelly.model.BthomeDeviceConfig;
 import cloud.cholewa.shelly.model.BthomeSensorConfig;
 import cloud.cholewa.shelly.model.BthomeSensorStatus;
 import cloud.cholewa.shelly.model.CoverStatus;
+import cloud.cholewa.shelly.model.EmDataStatus;
+import cloud.cholewa.shelly.model.EmStatus;
 import cloud.cholewa.shelly.model.Gen2LightStatus;
 import cloud.cholewa.shelly.model.RgbwStatus;
 import cloud.cholewa.shelly.model.ShellyComponent;
@@ -157,6 +159,16 @@ public class ShellyRpcClient {
      */
     public Mono<Map<String, Object>> status(String address) {
         return components(address, "Shelly.GetStatus", status -> status.containsKey("sys"));
+    }
+
+    /** {@code EM.GetStatus} of a three-phase energy meter: the readings now; an answer is one with the total active power. */
+    public Mono<EmStatus> emStatus(String address, int id) {
+        return read(address, "EM.GetStatus", params(id), EmStatus.class, status -> status.getTotalActPower() != null);
+    }
+
+    /** {@code EMData.GetStatus} of a three-phase energy meter: the energy counters; an answer is one with the total taken. */
+    public Mono<EmDataStatus> emDataStatus(String address, int id) {
+        return read(address, "EMData.GetStatus", params(id), EmDataStatus.class, status -> status.getTotalAct() != null);
     }
 
     public Mono<BthomeSensorConfig> bthomeSensorConfig(String address, int id) {

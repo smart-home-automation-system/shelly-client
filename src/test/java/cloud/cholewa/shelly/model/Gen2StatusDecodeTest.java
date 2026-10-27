@@ -203,6 +203,58 @@ class Gen2StatusDecodeTest {
         assertEquals("Weather station", config.getName());
     }
 
+    // the shape a Pro 3EM (2.1.0, the profile triphase) answered at the grid entry (HAS-327), the
+    // values invented: phase a returns energy to the grid, so its active power and the total are
+    // negative; the neutral current is null on a meter without its sensor, no error is sent
+    @Test
+    void shouldDecodeTheReadingsOfAThreePhaseMeter() {
+        EmStatus meter = Samples.decode("gen2/em-status.json", EmStatus.class);
+
+        assertEquals(0, meter.getId());
+        assertEquals(236.8, meter.getaVoltage());
+        assertEquals(1.652, meter.getaCurrent());
+        assertEquals(-171.4, meter.getaActPower());
+        assertEquals(391.2, meter.getaAprtPower());
+        assertEquals(0.44, meter.getaPf());
+        assertEquals(50.0, meter.getaFreq());
+        assertEquals(31.2, meter.getbActPower());
+        assertEquals(26.7, meter.getcActPower());
+        assertEquals(49.9, meter.getcFreq());
+        assertNull(meter.getnCurrent());
+        assertEquals(6.001, meter.getTotalCurrent());
+        assertEquals(-113.5, meter.getTotalActPower());
+        assertEquals(1413.0, meter.getTotalAprtPower());
+        assertTrue(meter.getErrors().isEmpty());
+        assertTrue(meter.getaErrors().isEmpty());
+    }
+
+    // what the documentation of the Pro 3EM says a meter sends with a fault: the errors of a phase
+    // and of the meter, as words - a list of strings, never an enum
+    @Test
+    void shouldDecodeTheErrorsOfAThreePhaseMeter() {
+        EmStatus meter = Samples.decode("gen2/em-status-errors.json", EmStatus.class);
+
+        assertEquals(List.of("out_of_range:voltage"), meter.getaErrors());
+        assertTrue(meter.getbErrors().isEmpty());
+        assertEquals(List.of("phase_sequence"), meter.getErrors());
+    }
+
+    // the energy counters in Wh, taken and returned per phase and in total
+    @Test
+    void shouldDecodeTheEnergyCountersOfAThreePhaseMeter() {
+        EmDataStatus counters = Samples.decode("gen2/emdata-status.json", EmDataStatus.class);
+
+        assertEquals(0, counters.getId());
+        assertEquals(243011.25, counters.getaTotalActEnergy());
+        assertEquals(732540.5, counters.getaTotalActRetEnergy());
+        assertEquals(398140.0, counters.getbTotalActEnergy());
+        assertEquals(694090.75, counters.getbTotalActRetEnergy());
+        assertEquals(249860.5, counters.getcTotalActEnergy());
+        assertEquals(732220.25, counters.getcTotalActRetEnergy());
+        assertEquals(891011.75, counters.getTotalAct());
+        assertEquals(2158851.5, counters.getTotalActRet());
+    }
+
     // the shape a Plug S Gen3 (2.1.0) answered with a weather station paired (HAS-236): the status
     // and the config of every dynamic component as raw maps, the attrs left out
     @Test
@@ -255,6 +307,14 @@ class Gen2StatusDecodeTest {
 
         ShellyComponent component = Samples.decodeText("{}", ShellyComponent.class);
         assertNull(component.getKey());
+
+        EmStatus meter = Samples.decodeText("{}", EmStatus.class);
+        assertNull(meter.getaActPower());
+        assertNull(meter.getTotalActPower());
+
+        EmDataStatus counters = Samples.decodeText("{}", EmDataStatus.class);
+        assertNull(counters.getTotalAct());
+        assertNull(counters.getTotalActRet());
     }
 
     // The one exception: a list. The generator starts it empty, so a list a device did not

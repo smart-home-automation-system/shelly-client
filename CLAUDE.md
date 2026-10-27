@@ -4,7 +4,8 @@ Shared library (`cloud.cholewa:shelly-client`) in the **smart-home-automation-sy
 workspace. Java 21, Maven, published to GitHub Packages
 (`maven.pkg.github.com/smart-home-automation-system/shelly-client`, pom server id
 `github`). Consumed by `blinds-service`, `weather-service` (2.x) and `boiler-service`, `heating-service`,
-`shelly-cloud-service`, `water-service` (1.0.0); `appliance-service` reads the Gen1 meter (2.2.0, HAS-278).
+`shelly-cloud-service`, `water-service` (1.0.0); `appliance-service` reads the Gen1 meter (2.2.0, HAS-278);
+`energy-service` the three-phase meter (2.3.0, HAS-327).
 
 Org-wide conventions and working rules (PR flow, branch naming `feature/HAS-<n>`,
 "user writes library code, Claude reviews", public-repo hygiene) live in the workspace
@@ -87,7 +88,11 @@ Consequences:
   API since 1.1.0.
 - **A model is added from a real payload when there is a device**: `GET /status` (Gen1) or
   `GET /rpc/Shelly.GetStatus` (Gen2+) of a device of the kind, read-only. The Bluetooth
-  components were checked on the gateway of the weather station (Plug S Gen3, 2.1.0, HAS-236).
+  components were checked on the gateway of the weather station (Plug S Gen3, 2.1.0, HAS-236), the
+  three-phase meter (`em`, `emdata`) on the Pro 3EM at the grid entry (2.1.0, HAS-327) - the energy
+  counters are Wh, and that meter is also a BTHome gateway of the registry: a reader of the gateways
+  gets its `em` statuses decoded since 2.3.0 (they were skipped before), and takes the components it
+  reads by name.
 - **The dynamic components are not in `Shelly.GetStatus`** (`bthomedevice`, `bthomesensor`,
   the virtual ones): `Shelly.GetComponents` with `dynamic_only` lists them, a page at a time
   (11 on that plug) - `dynamicComponents` reads every page.

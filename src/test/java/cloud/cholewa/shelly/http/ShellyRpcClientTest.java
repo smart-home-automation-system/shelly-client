@@ -146,6 +146,20 @@ class ShellyRpcClientTest {
         sut.bthomeSensorStatus(device.address(), 201).as(StepVerifier::create)
             .assertNext(status -> assertThat(status.getValue()).isEqualTo(21.6)).verifyComplete();
         assertThat(device.asked().getUrl().encodedPath()).isEqualTo("/rpc/BTHomeSensor.GetStatus");
+
+        device.answersSample("gen2/em-status.json");
+        sut.emStatus(device.address(), 0).as(StepVerifier::create)
+            .assertNext(meter -> assertThat(meter.getaVoltage()).isEqualTo(236.8)).verifyComplete();
+        RecordedRequest readings = device.asked();
+        assertThat(readings.getUrl().encodedPath()).isEqualTo("/rpc/EM.GetStatus");
+        assertThat(readings.getBody().utf8()).isEqualTo("{\"id\":0}");
+
+        device.answersSample("gen2/emdata-status.json");
+        sut.emDataStatus(device.address(), 0).as(StepVerifier::create)
+            .assertNext(counters -> assertThat(counters.getTotalAct()).isEqualTo(891011.75)).verifyComplete();
+        RecordedRequest counters = device.asked();
+        assertThat(counters.getUrl().encodedPath()).isEqualTo("/rpc/EMData.GetStatus");
+        assertThat(counters.getBody().utf8()).isEqualTo("{\"id\":0}");
     }
 
     // every component under its key, as a raw map: which there are differs by the device
@@ -357,6 +371,19 @@ class ShellyRpcClientTest {
         sut.coverStatus(device.address(), 0).as(StepVerifier::create)
             .expectErrorSatisfies(failure -> assertThat(failure).isInstanceOf(ShellyCallException.class)
                 .hasMessageContaining("Cover.GetStatus on " + device.address()))
+            .verify();
+    }
+
+    // the meters the same way: an answer without the total active power is not the readings, one
+    // without the total taken not the counters
+    @ParameterizedTest
+    @ValueSource(strings = { "{}", "{\"id\":0,\"a_voltage\":236.8}", "{\"id\":0,\"total_act_ret\":12.5}" })
+    void shouldFailAReadOfAMeterWhoseAnswerIsNotTheModel(String answer) {
+        device.answersJson(answer);
+        sut.emStatus(device.address(), 0).as(StepVerifier::create).expectError(ShellyCallException.class).verify();
+
+        device.answersJson(answer);
+        sut.emDataStatus(device.address(), 0).as(StepVerifier::create).expectError(ShellyCallException.class)
             .verify();
     }
 
