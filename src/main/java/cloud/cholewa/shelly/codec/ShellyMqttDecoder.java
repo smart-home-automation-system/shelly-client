@@ -4,6 +4,8 @@ import cloud.cholewa.shelly.model.BthomeDeviceStatus;
 import cloud.cholewa.shelly.model.BthomeSensorStatus;
 import cloud.cholewa.shelly.model.CoverStatus;
 import cloud.cholewa.shelly.model.DevicePowerStatus;
+import cloud.cholewa.shelly.model.EmDataStatus;
+import cloud.cholewa.shelly.model.EmStatus;
 import cloud.cholewa.shelly.model.Gen2LightStatus;
 import cloud.cholewa.shelly.model.HumidityStatus;
 import cloud.cholewa.shelly.model.IlluminanceStatus;
@@ -29,8 +31,8 @@ import tools.jackson.databind.json.JsonMapper;
  * broker, and the body - into a {@link ShellyEvent}.
  * <p>
  * Most of what a device publishes is not about the house ({@code sys}, {@code wifi},
- * {@code cloud}, the energy meters): for a component without a model here the answer is
- * nothing, and the body is not even read. A body that should be a model and is not is a
+ * {@code cloud}): for a component without a model here the answer is nothing, and the body
+ * is not even read. The three-phase energy meter is ({@code em}, {@code emdata} - 2.3.0). A body that should be a model and is not is a
  * {@link ShellyDecodeException}.
  */
 public class ShellyMqttDecoder {
@@ -58,7 +60,9 @@ public class ShellyMqttDecoder {
         Map.entry("humidity", new Model<>(HumidityStatus.class, HumidityStatus::getId)),
         Map.entry("devicepower", new Model<>(DevicePowerStatus.class, DevicePowerStatus::getId)),
         Map.entry("bthomedevice", new Model<>(BthomeDeviceStatus.class, BthomeDeviceStatus::getId)),
-        Map.entry("bthomesensor", new Model<>(BthomeSensorStatus.class, BthomeSensorStatus::getId)));
+        Map.entry("bthomesensor", new Model<>(BthomeSensorStatus.class, BthomeSensorStatus::getId)),
+        Map.entry("em", new Model<>(EmStatus.class, EmStatus::getId)),
+        Map.entry("emdata", new Model<>(EmDataStatus.class, EmDataStatus::getId)));
 
     private static final Map<String, Class<?>> NOTIFICATIONS = Map.of(
         "NotifyStatus", NotifyStatus.class,

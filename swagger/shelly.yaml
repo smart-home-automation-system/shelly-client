@@ -386,6 +386,142 @@ components:
           type: array
           items:
             type: string
+    EmStatus:
+      description: >-
+        The status of the component em of a three-phase energy meter (Pro 3EM in the profile
+        triphase) - the readings now, per phase a, b, c and in total; also the body of the MQTT
+        topic status/em:0. A signed active power is negative where the phase returns energy to
+        the grid. The errors are missing while there is none.
+      type: object
+      properties:
+        id:
+          type: integer
+        a_current:
+          type: number
+          format: double
+        a_voltage:
+          type: number
+          format: double
+        a_act_power:
+          type: number
+          format: double
+        a_aprt_power:
+          type: number
+          format: double
+        a_pf:
+          type: number
+          format: double
+        a_freq:
+          type: number
+          format: double
+        a_errors:
+          description: The errors of phase a - out_of_range:active_power, out_of_range:apparent_power, out_of_range:voltage, out_of_range:current, and more.
+          type: array
+          items:
+            type: string
+        b_current:
+          type: number
+          format: double
+        b_voltage:
+          type: number
+          format: double
+        b_act_power:
+          type: number
+          format: double
+        b_aprt_power:
+          type: number
+          format: double
+        b_pf:
+          type: number
+          format: double
+        b_freq:
+          type: number
+          format: double
+        b_errors:
+          type: array
+          items:
+            type: string
+        c_current:
+          type: number
+          format: double
+        c_voltage:
+          type: number
+          format: double
+        c_act_power:
+          type: number
+          format: double
+        c_aprt_power:
+          type: number
+          format: double
+        c_pf:
+          type: number
+          format: double
+        c_freq:
+          type: number
+          format: double
+        c_errors:
+          type: array
+          items:
+            type: string
+        n_current:
+          description: The current of the neutral wire - null on a meter without a sensor there.
+          type: number
+          format: double
+        n_errors:
+          type: array
+          items:
+            type: string
+        total_current:
+          type: number
+          format: double
+        total_act_power:
+          type: number
+          format: double
+        total_aprt_power:
+          type: number
+          format: double
+        errors:
+          description: The errors of the meter - power_meter_failure, phase_sequence, no_load, and more.
+          type: array
+          items:
+            type: string
+    EmDataStatus:
+      description: >-
+        The status of the component emdata of a three-phase energy meter - the counters of the
+        active energy in Wh since the meter was set up, taken (act) and returned to the grid
+        (act_ret), per phase and in total; also the body of the MQTT topic status/emdata:0.
+      type: object
+      properties:
+        id:
+          type: integer
+        a_total_act_energy:
+          type: number
+          format: double
+        a_total_act_ret_energy:
+          type: number
+          format: double
+        b_total_act_energy:
+          type: number
+          format: double
+        b_total_act_ret_energy:
+          type: number
+          format: double
+        c_total_act_energy:
+          type: number
+          format: double
+        c_total_act_ret_energy:
+          type: number
+          format: double
+        total_act:
+          type: number
+          format: double
+        total_act_ret:
+          type: number
+          format: double
+        errors:
+          type: array
+          items:
+            type: string
     Gen2LightStatus:
       description: The status of the component light of a Gen2+ device - a dimmer.
       type: object

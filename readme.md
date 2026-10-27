@@ -31,7 +31,8 @@ devices:
 See [Usage](#usage) for what a service has to bring itself.
 
 Current consumers: `blinds-service`, `weather-service` (2.x); `boiler-service`, `heating-service`,
-`shelly-cloud-service`, `water-service` (1.0.0); `appliance-service` (2.2.0 - the Gen1 meter).
+`shelly-cloud-service`, `water-service` (1.0.0); `appliance-service` (2.2.0 - the Gen1 meter);
+`energy-service` (2.3.0 - the three-phase meter).
 
 ## Installation
 
@@ -42,7 +43,7 @@ workflow on release.
 <dependency>
     <groupId>cloud.cholewa</groupId>
     <artifactId>shelly-client</artifactId>
-    <version>2.0.0</version>
+    <version>2.3.0</version>
 </dependency>
 ```
 
@@ -86,6 +87,7 @@ The body of the MQTT topic `<device id>/status/<component>:<id>`, and the answer
 | `IlluminanceStatus` | `illuminance` | `illumination` (`dark` / `twilight` / `bright`) and, where the device measures it, `lux`. |
 | `TemperatureStatus`, `HumidityStatus`, `DevicePowerStatus` | `temperature`, `humidity`, `devicepower` | What a battery thermometer (H&T) publishes when it wakes. |
 | `BthomeDeviceStatus`, `BthomeDeviceConfig`, `BthomeSensorStatus`, `BthomeSensorConfig` | `bthomedevice`, `bthomesensor` | A Bluetooth device paired with a gateway and its address, one value it reports, and which value that is. Checked on a Plug S Gen3 (2.1.0) with a WS90 paired (HAS-236): a sensor is published only when its value changes; `last_updated_ts` and `value` are `0` and `null` until the gateway has heard the object once. |
+| `EmStatus`, `EmDataStatus` | `em`, `emdata` | A three-phase energy meter (Pro 3EM, the profile `triphase`; 2.3.0, HAS-327): per phase `a_` / `b_` / `c_` the voltage, current, active and apparent power, power factor and frequency, the totals and the errors as words; the counters of the active energy in **Wh**, taken (`act`) and returned (`act_ret`), per phase and in total. A negative active power is energy returned to the grid. Checked on the meter of the house (2.1.0): the readings are published about every 5 s, the counters once a minute. |
 | `ShellyComponentsPage`, `ShellyComponent` | - (an RPC answer) | One page of `Shelly.GetComponents`: each component with its `key` and its `status` and `config` as raw maps. |
 | `ShellyPro4StatusResponse` | `switch` | The older model of a switch (since 0.0.x): its measurements are integers, so a decimal is cut off. New code reads `SwitchStatus`. |
 
@@ -191,6 +193,7 @@ class BlindsActuator {
 | `coverStatus`, `switchStatus`, `lightStatus`, `rgbStatus`, `rgbwStatus` | the model of the component |
 | `status` | `Shelly.GetStatus`: every component under its key (`switch:0`, `sys`), each a raw map |
 | `bthomeSensorConfig`, `bthomeSensorStatus`, `bthomeDeviceConfig`, `webhookListSupported` | the model, and a raw map |
+| `emStatus`, `emDataStatus` | `EM.GetStatus` and `EMData.GetStatus` of a three-phase meter: the readings (an answer has `total_act_power`) and the energy counters (an answer has `total_act`) |
 | `dynamicComponents` | `Shelly.GetComponents` with `dynamic_only`: every dynamic component (`bthomedevice`, `bthomesensor`, the virtual ones - `Shelly.GetStatus` leaves them out), status and config asked for by name, all pages read one after the other, at most 256 components; a failed page, a page that starts elsewhere than asked, or a change of `cfg_rev` or of the total between two pages fails the whole list |
 
 | `ShellyGen1Client` (Gen1, `GET` with the command in the query) | |
@@ -282,11 +285,12 @@ private Mono<Void> handle(ShellyEvent event) {
 
 - **Ask the registry before decoding.** Every queue gets every message of every device;
   `ShellyTopic.parse` costs nothing and gives the device id.
-- **`decode` answers nothing for what has no model** - `sys`, `wifi`, `cloud`, the energy
-  meters, any other topic - and does not read the body then.
+- **`decode` answers nothing for what has no model** - `sys`, `wifi`, `cloud`, the meter of a
+  plug (`pm1`), any other topic - and does not read the body then.
   `ShellyMqttDecoder.decodedComponents()` lists what is decoded: `switch`, `cover`, `light`,
   `rgb`, `rgbw`, `presencezone`, `illuminance`, `temperature`, `humidity`, `devicepower`,
-  `bthomedevice`, `bthomesensor`.
+  `bthomedevice`, `bthomesensor`, and since 2.3.0 `em`, `emdata` (the three-phase meter - a consumer
+  that reads the BTHome gateways sees them from a Pro 3EM that is one: filter by the component).
 - **A `Status` is the whole component, not a change.** A device repeats it about once a
   minute, changed or not; compare with what you hold.
 - **`ShellyDecodeException` is thrown** for a body that is not what its topic carries - not

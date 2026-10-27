@@ -7,6 +7,8 @@ import cloud.cholewa.shelly.model.BthomeDeviceStatus;
 import cloud.cholewa.shelly.model.BthomeSensorStatus;
 import cloud.cholewa.shelly.model.CoverStatus;
 import cloud.cholewa.shelly.model.DevicePowerStatus;
+import cloud.cholewa.shelly.model.EmDataStatus;
+import cloud.cholewa.shelly.model.EmStatus;
 import cloud.cholewa.shelly.model.Gen2LightStatus;
 import cloud.cholewa.shelly.model.HumidityStatus;
 import cloud.cholewa.shelly.model.IlluminanceStatus;
@@ -54,7 +56,9 @@ class ShellyMqttDecoderTest {
             Arguments.of("humidity:0", "gen2/humidity-status.json", HumidityStatus.class),
             Arguments.of("devicepower:0", "gen2/devicepower-status.json", DevicePowerStatus.class),
             Arguments.of("bthomedevice:200", "gen2/bthomedevice-status.json", BthomeDeviceStatus.class),
-            Arguments.of("bthomesensor:201", "gen2/bthomesensor-status-number.json", BthomeSensorStatus.class));
+            Arguments.of("bthomesensor:201", "gen2/bthomesensor-status-number.json", BthomeSensorStatus.class),
+            Arguments.of("em:0", "gen2/em-status.json", EmStatus.class),
+            Arguments.of("emdata:0", "gen2/emdata-status.json", EmDataStatus.class));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -91,6 +95,23 @@ class ShellyMqttDecoderTest {
         assertThat(event.as(CoverStatus.class)).isEmpty();
     }
 
+    // the three-phase meter at the grid entry (HAS-327): the readings about every 5 s, the counters once a minute
+    @Test
+    void shouldGiveTheReadingsAndTheCountersOfAThreePhaseMeter() {
+        String meter = "shellypro3em-a1b2c3d4e5f6";
+
+        ShellyEvent.Status readings = (ShellyEvent.Status) sut
+            .decode(meter + ".status.em:0", sample("gen2/em-status.json")).orElseThrow();
+        assertThat(readings.deviceId()).isEqualTo(meter);
+        assertThat(readings.as(EmStatus.class)).get().extracting(EmStatus::getTotalActPower).isEqualTo(-113.5);
+
+        ShellyEvent.Status counters = (ShellyEvent.Status) sut
+            .decode(meter + ".status.emdata:0", sample("gen2/emdata-status.json")).orElseThrow();
+        assertThat(counters.as(EmDataStatus.class)).get().extracting(EmDataStatus::getTotalActRet)
+            .isEqualTo(2158851.5);
+        assertThat(counters.as(EmStatus.class)).isEmpty();
+    }
+
     // the topic of the device and the routing key of the broker are the same message
     @Test
     void shouldDecodeTheTopicOfTheDeviceAsWell() {
@@ -121,7 +142,7 @@ class ShellyMqttDecoderTest {
     // which the bodies that are no JSON show.
     @ParameterizedTest
     @ValueSource(strings = { "status.sys", "status.mqtt", "status.cloud", "status.wifi", "status.ble",
-        "status.bthome", "status.plugs_ui", "status.pm1:0", "status.em:0", "status.emdata:0", "status.input:0",
+        "status.bthome", "status.plugs_ui", "status.pm1:0", "status.em1:0", "status.em1data:0", "status.input:0",
         "status.number:201", "status.presence", "status.modbus", "rpc", "status", "debug.log",
         // a component that has a model, without its id: not that component
         "status.temperature", "status.switch", "status.switch:x" })
