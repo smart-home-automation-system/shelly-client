@@ -43,7 +43,7 @@ workflow on release.
 <dependency>
     <groupId>cloud.cholewa</groupId>
     <artifactId>shelly-client</artifactId>
-    <version>2.3.0</version>
+    <version>2.4.0</version>
 </dependency>
 ```
 
@@ -65,12 +65,12 @@ Add the organization's GitHub Packages repository (requires a GitHub token with
 
 | Model | What it is |
 |---|---|
-| `Gen1DeviceStatus` | The envelope: `rollers`, `lights`, `relays`, and `mode`, `unixtime`, `wifi_sta`, `cloud`. Which list is filled says what the device is - a Shelly 2.5 does not send `mode`. |
+| `Gen1DeviceStatus` | The envelope: `rollers`, `lights`, `relays`, and `mode`, `unixtime`, `wifi_sta`, `cloud`. Which list is filled says what the device is - a Shelly 2.5 does not send `mode`. Since 2.4.0 (HAS-367) the sensors of the temperature add-on of a Shelly 1 / 1PM: `ext_temperature` and `ext_humidity` - maps by the index of the sensor (`"0"`, `"1"`, ...) of `ExternalTemperatureValue` (`hwID`, `tC`, `tF`) and `ExternalHumidityValue` (`hwID`, `hum` %) - and `ext_sensors.temperature_unit`; empty maps without the add-on. Checked on the Shelly 1 of the sauna (one DS18B20, firmware 1.14.0). |
 | `RollerStatus` | One roller of a Shelly 2.5: `state` (`stop` / `open` / `close` - what the motor does), `current_pos` (0 closed to 100 open, meaningful only while `positioning` is true), `last_direction`, `stop_reason`, `calibrating`. |
 | `Gen1LightStatus` | One light, for every Gen1 light (RGBW2, bulb, Duo): `ison`, `mode`, `red` / `green` / `blue` / `white`, `gain`, `brightness`, `temp`. **In the mode `color` the level is `gain`, in the mode `white` it is `brightness`**; a field the device does not have is missing. |
 | `Relay` | One relay (since 0.0.x). |
 | `MotionStatus` | A Shelly Motion: `sensor` (`motion`, `vibration`, `timestamp`, `active`), `lux` (`value`, `illumination`), `bat` (`value`, `voltage`). |
-| `ShellyUniStatusResponse`, `ShellyProRelayResponse` | The Uni of the hot water and the answer of a relay command (since 0.0.x). |
+| `ShellyUniStatusResponse`, `ShellyProRelayResponse` | The Uni of the hot water and the answer of a relay command (since 0.0.x); its `ext_temperature` is the same map - with `tF` since 2.4.0. |
 
 ### Gen2 and later - the status of one component
 
