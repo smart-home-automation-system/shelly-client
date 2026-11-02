@@ -88,6 +88,10 @@ components:
         source:
           type: string
     ExternalTemperature:
+      description: >-
+        The temperature sensors of the add-on of a Gen1 device (a Shelly 1 / 1PM with the temperature add-on, a Shelly
+        Uni), by their index ("0", "1", ...): hwID - the address of the sensor, tC and tF - the temperature in degrees
+        Celsius and Fahrenheit. A device without a sensor sends no entry.
       type: object
       additionalProperties:
         type: object
@@ -97,6 +101,29 @@ components:
           tC:
             type: number
             format: double
+          tF:
+            type: number
+            format: double
+    ExternalHumidity:
+      description: >-
+        The humidity sensors of the add-on of a Gen1 device (a DHT22 on the temperature add-on), by their index: hwID -
+        the address of the sensor, hum - the relative humidity in %. A device without one sends no entry.
+      type: object
+      additionalProperties:
+        type: object
+        properties:
+          hwID:
+            type: string
+          hum:
+            type: number
+            format: double
+    ExternalSensors:
+      description: The settings of the add-on sensors of a Gen1 device in /status.
+      type: object
+      properties:
+        temperature_unit:
+          description: C or F - the unit the device shows; tC and tF are both always sent.
+          type: string
 
     # ---------------------------------------------------------------------------------------
     # Gen1 - what a device answers to GET /status
@@ -106,7 +133,9 @@ components:
         The parts of GET /status of a Gen1 device the house reads. Which of the three lists
         is filled follows from the device: a Shelly 2.5 in roller mode has rollers, a bulb or
         an RGBW2 has lights, a plug or a switch has relays. A list the device does not send
-        reads as empty.
+        reads as empty. A Shelly 1 / 1PM with the temperature add-on also sends its sensors -
+        ext_sensors, ext_temperature and ext_humidity (2.4.0); a device without it sends none,
+        and the maps read as empty.
       type: object
       properties:
         mode:
@@ -133,6 +162,12 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/Relay'
+        ext_sensors:
+          $ref: '#/components/schemas/ExternalSensors'
+        ext_temperature:
+          $ref: '#/components/schemas/ExternalTemperature'
+        ext_humidity:
+          $ref: '#/components/schemas/ExternalHumidity'
     RollerStatus:
       description: One roller of a Gen1 device (Shelly 2.5) - an item of rollers in /status, and the answer of GET /roller/0.
       type: object

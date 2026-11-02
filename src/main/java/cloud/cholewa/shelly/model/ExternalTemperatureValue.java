@@ -9,7 +9,8 @@ import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
-@JsonPropertyOrder({ExternalTemperatureValue.JSON_PROPERTY_HW_I_D, ExternalTemperatureValue.JSON_PROPERTY_T_C})
+@JsonPropertyOrder({ExternalTemperatureValue.JSON_PROPERTY_HW_I_D, ExternalTemperatureValue.JSON_PROPERTY_T_C,
+        ExternalTemperatureValue.JSON_PROPERTY_T_F})
 @JsonTypeName("ExternalTemperature_value")
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
@@ -20,6 +21,8 @@ public class ExternalTemperatureValue {
     private String hwID;
     public static final String JSON_PROPERTY_T_C = "tC";
     private Double tC;
+    public static final String JSON_PROPERTY_T_F = "tF";
+    private Double tF;
 
     public ExternalTemperatureValue hwID(String hwID) {
         this.hwID = hwID;
@@ -57,6 +60,24 @@ public class ExternalTemperatureValue {
         this.tC = tC;
     }
 
+    public ExternalTemperatureValue tF(Double tF) {
+        this.tF = tF;
+        return this;
+    }
+
+    @Nullable
+    @JsonProperty(JSON_PROPERTY_T_F)
+    @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+    public Double gettF() {
+        return tF;
+    }
+
+    @JsonProperty(JSON_PROPERTY_T_F)
+    @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+    public void settF(Double tF) {
+        this.tF = tF;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -67,12 +88,13 @@ public class ExternalTemperatureValue {
         }
         ExternalTemperatureValue externalTemperatureValue = (ExternalTemperatureValue) o;
         return Objects.equals(this.hwID, externalTemperatureValue.hwID)
-                && Objects.equals(this.tC, externalTemperatureValue.tC);
+                && Objects.equals(this.tC, externalTemperatureValue.tC)
+                && Objects.equals(this.tF, externalTemperatureValue.tF);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(hwID, tC);
+        return Objects.hash(hwID, tC, tF);
     }
 
     @Override
@@ -81,6 +103,7 @@ public class ExternalTemperatureValue {
         sb.append("class ExternalTemperatureValue {\n");
         sb.append("    hwID: ").append(toIndentedString(hwID)).append("\n");
         sb.append("    tC: ").append(toIndentedString(tC)).append("\n");
+        sb.append("    tF: ").append(toIndentedString(tF)).append("\n");
         sb.append("}");
         return sb.toString();
     }

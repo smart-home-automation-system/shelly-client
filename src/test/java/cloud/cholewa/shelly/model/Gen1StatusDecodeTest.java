@@ -96,6 +96,34 @@ class Gen1StatusDecodeTest {
         assertTrue(status.getLights().isEmpty());
     }
 
+    // HAS-367: the temperature add-on of a Shelly 1 (SHSW-1, firmware 1.14.0, one DS18B20 - the sauna of the house,
+    // the address of the sensor invented): the sensors by their index, both units, the unit the device shows
+    @Test
+    void shouldDecodeTheTemperatureAddOnOfASwitch() {
+        Gen1DeviceStatus status = Samples.decode("gen1/addon-temperature-status.json", Gen1DeviceStatus.class);
+
+        assertEquals("C", status.getExtSensors().getTemperatureUnit());
+        assertEquals(1, status.getExtTemperature().size());
+        ExternalTemperatureValue sensor = status.getExtTemperature().get("0");
+        assertEquals("28aabbccddeeff00", sensor.getHwID());
+        assertEquals(7.12, sensor.gettC());
+        assertEquals(44.83, sensor.gettF());
+        assertTrue(status.getExtHumidity().isEmpty());
+        assertFalse(status.getRelays().get(0).getIson());
+    }
+
+    // a DHT22 on the add-on reports the humidity too, by the same index
+    @Test
+    void shouldDecodeTheHumidityOfTheAddOn() {
+        Gen1DeviceStatus status = Samples.decodeText("""
+            {"ext_temperature":{"0":{"hwID":"aabbcc0000000000","tC":21.4,"tF":70.52}},
+             "ext_humidity":{"0":{"hwID":"aabbcc0000000000","hum":48.6}}}""", Gen1DeviceStatus.class);
+
+        assertEquals(48.6, status.getExtHumidity().get("0").getHum());
+        assertEquals("aabbcc0000000000", status.getExtHumidity().get("0").getHwID());
+        assertEquals(21.4, status.getExtTemperature().get("0").gettC());
+    }
+
     @Test
     void shouldDecodeAMotionSensor() {
         MotionStatus status = Samples.decode("gen1/motion-status.json", MotionStatus.class);
@@ -142,6 +170,16 @@ class Gen1StatusDecodeTest {
         assertNull(motion.getSensor());
         assertNull(motion.getLux());
         assertNull(motion.getBat());
+
+        // a device without the add-on: no sensors, no unit
+        Gen1DeviceStatus withoutAddOn = Samples.decodeText("{}", Gen1DeviceStatus.class);
+        assertNull(withoutAddOn.getExtSensors());
+        assertTrue(withoutAddOn.getExtTemperature().isEmpty());
+        assertTrue(withoutAddOn.getExtHumidity().isEmpty());
+
+        ExternalTemperatureValue sensor = Samples.decodeText("{}", ExternalTemperatureValue.class);
+        assertNull(sensor.gettC());
+        assertNull(sensor.gettF());
 
         Gen1Meter meter = Samples.decodeText("{}", Gen1Meter.class);
         assertNull(meter.getPower());

@@ -93,6 +93,11 @@ Consequences:
   counters are Wh, and that meter is also a BTHome gateway of the registry: a reader of the gateways
   gets its `em` statuses decoded since 2.3.0 (they were skipped before), and takes the components it
   reads by name.
+- **The add-on sensors of a Gen1 switch** (2.4.0, HAS-367): `ext_sensors`, `ext_temperature` and `ext_humidity` of
+  `Gen1DeviceStatus`, read on the Shelly 1 of the sauna (SHSW-1, firmware 1.14.0, one DS18B20 - `ext_humidity` comes as
+  `{}` without a DHT22). The maps are keyed by the index of the sensor as text; `ExternalTemperatureValue` is the schema
+  `ShellyUniStatusResponse` already used, with `tF` added - the Uni sends the same structure. First consumer:
+  heating-service, the sauna thermometer of the epic HAS-366.
 - **The dynamic components are not in `Shelly.GetStatus`** (`bthomedevice`, `bthomesensor`,
   the virtual ones): `Shelly.GetComponents` with `dynamic_only` lists them, a page at a time
   (11 on that plug) - `dynamicComponents` reads every page.

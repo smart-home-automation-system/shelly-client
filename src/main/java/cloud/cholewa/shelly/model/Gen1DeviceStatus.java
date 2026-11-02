@@ -6,7 +6,9 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import jakarta.annotation.Nullable;
 import jakarta.validation.Valid;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
@@ -14,7 +16,8 @@ import lombok.experimental.SuperBuilder;
 @JsonPropertyOrder({Gen1DeviceStatus.JSON_PROPERTY_MODE, Gen1DeviceStatus.JSON_PROPERTY_UNIXTIME,
         Gen1DeviceStatus.JSON_PROPERTY_WIFI_STA, Gen1DeviceStatus.JSON_PROPERTY_CLOUD,
         Gen1DeviceStatus.JSON_PROPERTY_ROLLERS, Gen1DeviceStatus.JSON_PROPERTY_LIGHTS,
-        Gen1DeviceStatus.JSON_PROPERTY_RELAYS})
+        Gen1DeviceStatus.JSON_PROPERTY_RELAYS, Gen1DeviceStatus.JSON_PROPERTY_EXT_SENSORS,
+        Gen1DeviceStatus.JSON_PROPERTY_EXT_TEMPERATURE, Gen1DeviceStatus.JSON_PROPERTY_EXT_HUMIDITY})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
 @SuperBuilder
@@ -34,6 +37,12 @@ public class Gen1DeviceStatus {
     private List<@Valid Gen1LightStatus> lights = new ArrayList<>();
     public static final String JSON_PROPERTY_RELAYS = "relays";
     private List<@Valid Relay> relays = new ArrayList<>();
+    public static final String JSON_PROPERTY_EXT_SENSORS = "ext_sensors";
+    private ExternalSensors extSensors;
+    public static final String JSON_PROPERTY_EXT_TEMPERATURE = "ext_temperature";
+    private Map<String, ExternalTemperatureValue> extTemperature = new HashMap<>();
+    public static final String JSON_PROPERTY_EXT_HUMIDITY = "ext_humidity";
+    private Map<String, ExternalHumidityValue> extHumidity = new HashMap<>();
 
     public Gen1DeviceStatus mode(String mode) {
         this.mode = mode;
@@ -190,6 +199,79 @@ public class Gen1DeviceStatus {
         this.relays = relays;
     }
 
+    public Gen1DeviceStatus extSensors(ExternalSensors extSensors) {
+        this.extSensors = extSensors;
+        return this;
+    }
+
+    @Nullable
+    @Valid
+    @JsonProperty(JSON_PROPERTY_EXT_SENSORS)
+    @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+    public ExternalSensors getExtSensors() {
+        return extSensors;
+    }
+
+    @JsonProperty(JSON_PROPERTY_EXT_SENSORS)
+    @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+    public void setExtSensors(ExternalSensors extSensors) {
+        this.extSensors = extSensors;
+    }
+
+    public Gen1DeviceStatus extTemperature(Map<String, ExternalTemperatureValue> extTemperature) {
+        this.extTemperature = extTemperature;
+        return this;
+    }
+
+    public Gen1DeviceStatus putExtTemperatureItem(String key, ExternalTemperatureValue extTemperatureItem) {
+        if (this.extTemperature == null) {
+            this.extTemperature = new HashMap<>();
+        }
+        this.extTemperature.put(key, extTemperatureItem);
+        return this;
+    }
+
+    @Nullable
+    @Valid
+    @JsonProperty(JSON_PROPERTY_EXT_TEMPERATURE)
+    @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+    public Map<String, ExternalTemperatureValue> getExtTemperature() {
+        return extTemperature;
+    }
+
+    @JsonProperty(JSON_PROPERTY_EXT_TEMPERATURE)
+    @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+    public void setExtTemperature(Map<String, ExternalTemperatureValue> extTemperature) {
+        this.extTemperature = extTemperature;
+    }
+
+    public Gen1DeviceStatus extHumidity(Map<String, ExternalHumidityValue> extHumidity) {
+        this.extHumidity = extHumidity;
+        return this;
+    }
+
+    public Gen1DeviceStatus putExtHumidityItem(String key, ExternalHumidityValue extHumidityItem) {
+        if (this.extHumidity == null) {
+            this.extHumidity = new HashMap<>();
+        }
+        this.extHumidity.put(key, extHumidityItem);
+        return this;
+    }
+
+    @Nullable
+    @Valid
+    @JsonProperty(JSON_PROPERTY_EXT_HUMIDITY)
+    @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+    public Map<String, ExternalHumidityValue> getExtHumidity() {
+        return extHumidity;
+    }
+
+    @JsonProperty(JSON_PROPERTY_EXT_HUMIDITY)
+    @JsonInclude(value = JsonInclude.Include.USE_DEFAULTS)
+    public void setExtHumidity(Map<String, ExternalHumidityValue> extHumidity) {
+        this.extHumidity = extHumidity;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -205,12 +287,16 @@ public class Gen1DeviceStatus {
                 && Objects.equals(this.cloud, gen1DeviceStatus.cloud)
                 && Objects.equals(this.rollers, gen1DeviceStatus.rollers)
                 && Objects.equals(this.lights, gen1DeviceStatus.lights)
-                && Objects.equals(this.relays, gen1DeviceStatus.relays);
+                && Objects.equals(this.relays, gen1DeviceStatus.relays)
+                && Objects.equals(this.extSensors, gen1DeviceStatus.extSensors)
+                && Objects.equals(this.extTemperature, gen1DeviceStatus.extTemperature)
+                && Objects.equals(this.extHumidity, gen1DeviceStatus.extHumidity);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(mode, unixtime, wifiSta, cloud, rollers, lights, relays);
+        return Objects.hash(mode, unixtime, wifiSta, cloud, rollers, lights, relays, extSensors, extTemperature,
+                extHumidity);
     }
 
     @Override
@@ -224,6 +310,9 @@ public class Gen1DeviceStatus {
         sb.append("    rollers: ").append(toIndentedString(rollers)).append("\n");
         sb.append("    lights: ").append(toIndentedString(lights)).append("\n");
         sb.append("    relays: ").append(toIndentedString(relays)).append("\n");
+        sb.append("    extSensors: ").append(toIndentedString(extSensors)).append("\n");
+        sb.append("    extTemperature: ").append(toIndentedString(extTemperature)).append("\n");
+        sb.append("    extHumidity: ").append(toIndentedString(extHumidity)).append("\n");
         sb.append("}");
         return sb.toString();
     }
