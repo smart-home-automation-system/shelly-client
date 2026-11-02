@@ -166,6 +166,21 @@ class ShellyGen1ClientTest {
         assertThat(request.getUrl().query()).isNull();
     }
 
+    // HAS-367: the sensors of the temperature add-on come with the status, as the device sends them
+    @Test
+    void shouldReadTheTemperatureAddOnWithTheStatus() {
+        device.answersSample("gen1/addon-temperature-status.json");
+
+        sut.status(device.address()).as(StepVerifier::create).assertNext(status -> {
+            assertThat(status.getExtTemperature()).containsOnlyKeys("0");
+            assertThat(status.getExtTemperature().get("0").gettC()).isEqualTo(7.12);
+            assertThat(status.getExtHumidity()).isEmpty();
+            assertThat(status.getRelays()).hasSize(1);
+        }).verifyComplete();
+
+        assertThat(device.asked().getUrl().encodedPath()).isEqualTo("/status");
+    }
+
     @Test
     void shouldReadTheStatusOfAMotionSensor() {
         device.answersSample("gen1/motion-status.json");
