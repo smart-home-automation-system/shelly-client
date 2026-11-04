@@ -49,14 +49,14 @@ public class ShellyMqttDecoder {
         // The status of a component carries its id, and it is the id of the topic: JSON without
         // it is JSON of something else, which would otherwise decode into a model of nulls, and
         // JSON with another id is the status of another channel
-        static <T> Model<T> withId(Class<T> type, Function<T, Integer> id) {
+        static <T> Model<T> withId(Class<T> type, Function<? super T, ? extends Integer> id) {
             return new Model<>(type, (status, index) -> index.equals(id.apply(status)), "the id of that component");
         }
 
         // The status of a virtual component has no id - the topic has the only one - so what
         // it cannot be without is the time of its value: every one the valve sent has it, and
         // "{}" or the status of another component does not
-        static <T> Model<T> virtual(Class<T> type, Function<T, Long> lastUpdate) {
+        static <T> Model<T> virtual(Class<T> type, Function<? super T, ? extends Long> lastUpdate) {
             return new Model<>(type, (status, index) -> lastUpdate.apply(status) != null, "the time of its value");
         }
 

@@ -356,7 +356,10 @@ class Gen2StatusDecodeTest {
         EmDataStatus counters = Samples.decodeText("{}", EmDataStatus.class);
         assertNull(counters.getTotalAct());
         assertNull(counters.getTotalActRet());
+    }
 
+    @Test
+    void shouldLeaveWhatAVirtualComponentDoesNotSendUnset() {
         NumberStatus number = Samples.decodeText("{}", NumberStatus.class);
         assertNull(number.getValue());
         assertNull(number.getSource());

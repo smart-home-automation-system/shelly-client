@@ -167,8 +167,10 @@ class ShellyMqttDecoderTest {
     @ValueSource(strings = { "{}", "{\"value\":3.5}", "{\"value\":true,\"source\":\"sys\"}", "{\"id\":0,\"output\":true}",
         "null", "[]", "not json" })
     void shouldRefuseABodyThatIsNotTheStatusOfAVirtualComponent(String body) {
+        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
         for (String component : new String[] { "number:200", "boolean:200", "object:200" }) {
-            assertThatThrownBy(() -> sut.decode(DEVICE + ".status." + component, body.getBytes(StandardCharsets.UTF_8)))
+            String key = DEVICE + ".status." + component;
+            assertThatThrownBy(() -> sut.decode(key, bytes))
                 .isInstanceOf(ShellyDecodeException.class).hasMessageContaining(component + " of " + DEVICE);
         }
     }
