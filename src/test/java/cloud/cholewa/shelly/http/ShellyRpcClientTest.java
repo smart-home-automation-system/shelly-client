@@ -45,6 +45,9 @@ class ShellyRpcClientTest {
                 (sut, address) -> sut.coverGoToPosition(address, 0, 30)),
             command("Switch.Set", "{\"id\":2,\"on\":true}", (sut, address) -> sut.switchSet(address, 2, true)),
             command("Switch.Set", "{\"id\":2,\"on\":false}", (sut, address) -> sut.switchSet(address, 2, false)),
+            command("Boolean.Set", "{\"id\":200,\"value\":true}", (sut, address) -> sut.booleanSet(address, 200, true)),
+            command("Boolean.Set", "{\"id\":200,\"value\":false}",
+                (sut, address) -> sut.booleanSet(address, 200, false)),
             command("Light.Set", "{\"id\":0,\"on\":true,\"brightness\":40}",
                 (sut, address) -> sut.lightSet(address, 0, true, 40)),
             // what is left null is not sent: the brightness alone leaves the output as it is
@@ -204,6 +207,32 @@ class ShellyRpcClientTest {
         assertThat(first.getBody().utf8()).isEqualTo("{\"dynamic_only\":true,\"include\":[\"status\",\"config\"],\"offset\":0}");
         assertThat(device.asked().getBody().utf8()).isEqualTo("{\"dynamic_only\":true,\"include\":[\"status\",\"config\"],\"offset\":2}");
         assertThat(device.calls()).isEqualTo(2);
+    }
+
+    // the virtual components of the water valve, with the attributes that say whose they are
+    @Test
+    void shouldReadTheVirtualComponentsOfAShellyXWithTheirAttributes() {
+        device.answersSample("rpc/components-virtual.json");
+
+        sut.dynamicComponents(device.address()).as(StepVerifier::create).assertNext(components -> {
+            assertThat(components).extracting(ShellyComponent::getKey)
+                .containsExactly("boolean:200", "number:200", "number:201", "number:202", "object:200");
+            assertThat(components).extracting(component -> component.getAttrs().get("role"))
+                .containsExactly("state", "flow_rate", "water_pressure", "water_temperature", "water_consumption");
+        }).verifyComplete();
+        assertThat(device.calls()).isEqualTo(1);
+    }
+
+    // a refusal of Boolean.Set - a component that is read only - carries the error of the device
+    @Test
+    void shouldFailASetOfABooleanTheDeviceRefuses() {
+        device.answers(500, "application/json", "{\"code\":-103,\"message\":\"Invalid argument!\"}");
+
+        sut.booleanSet(device.address(), 201, true).as(StepVerifier::create)
+            .expectErrorSatisfies(failure -> assertThat(failure).isInstanceOf(ShellyRpcException.class)
+                .hasMessageContaining("Boolean.Set on " + device.address())
+                .extracting(refusal -> ((ShellyRpcException) refusal).code()).isEqualTo(-103))
+            .verify();
     }
 
     @Test

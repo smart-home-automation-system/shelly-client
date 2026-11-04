@@ -32,7 +32,7 @@ See [Usage](#usage) for what a service has to bring itself.
 
 Current consumers: `blinds-service`, `weather-service` (2.x); `boiler-service`, `heating-service`,
 `shelly-cloud-service`, `water-service` (1.0.0); `appliance-service` (2.2.0 - the Gen1 meter);
-`energy-service` (2.3.0 - the three-phase meter).
+`energy-service` (2.3.0 - the three-phase meter); `water-service` takes 2.5.0 for the water valve.
 
 ## Installation
 
@@ -43,7 +43,7 @@ workflow on release.
 <dependency>
     <groupId>cloud.cholewa</groupId>
     <artifactId>shelly-client</artifactId>
-    <version>2.4.0</version>
+    <version>2.5.0</version>
 </dependency>
 ```
 
@@ -88,7 +88,8 @@ The body of the MQTT topic `<device id>/status/<component>:<id>`, and the answer
 | `TemperatureStatus`, `HumidityStatus`, `DevicePowerStatus` | `temperature`, `humidity`, `devicepower` | What a battery thermometer (H&T) publishes when it wakes. |
 | `BthomeDeviceStatus`, `BthomeDeviceConfig`, `BthomeSensorStatus`, `BthomeSensorConfig` | `bthomedevice`, `bthomesensor` | A Bluetooth device paired with a gateway and its address, one value it reports, and which value that is. Checked on a Plug S Gen3 (2.1.0) with a WS90 paired (HAS-236): a sensor is published only when its value changes; `last_updated_ts` and `value` are `0` and `null` until the gateway has heard the object once. |
 | `EmStatus`, `EmDataStatus` | `em`, `emdata` | A three-phase energy meter (Pro 3EM, the profile `triphase`; 2.3.0, HAS-327): per phase `a_` / `b_` / `c_` the voltage, current, active and apparent power, power factor and frequency, the totals and the errors as words; the counters of the active energy in **Wh**, taken (`act`) and returned (`act_ret`), per phase and in total. A negative active power is energy returned to the grid. Checked on the meter of the house (2.1.0): the readings are published about every 5 s, the counters once a minute. |
-| `ShellyComponentsPage`, `ShellyComponent` | - (an RPC answer) | One page of `Shelly.GetComponents`: each component with its `key` and its `status` and `config` as raw maps. |
+| `NumberStatus`, `BooleanStatus`, `ObjectStatus` | `number`, `boolean`, `object` | The virtual components of a Shelly X device (ids 200 and up, owned by its service; 2.5.0, HAS-315): `value` (a `Double`, a `Boolean`, an open map), `source` (`sys` when the service set it) and `last_update_ts` - **no `id`**: the key of the topic or of the component is the only one. The unit is in the config (`meta.ui.unit`). Checked on the Neo Smart Water Valve (XT1, 2.0.1): `boolean:200` the valve (`true` open), `number:200` the flow rate m³/min, `number:201` the pressure kPa, `number:202` the water temperature °C, `object:200` the counter - `value.counter.total` (m³), `minute_ts`, `by_minute` (litres in each of the last three minutes), read from the map. |
+| `ShellyComponentsPage`, `ShellyComponent` | - (an RPC answer) | One page of `Shelly.GetComponents`: each component with its `key` and its `status`, `config` and `attrs` as raw maps. `attrs` (2.5.0) holds the `owner` and the `role` of a virtual component (`service:0`, `flow_rate`) - what finds a reading on another device of the same kind - and the `model_id` of a `bthomedevice`. |
 | `ShellyPro4StatusResponse` | `switch` | The older model of a switch (since 0.0.x): its measurements are integers, so a decimal is cut off. New code reads `SwitchStatus`. |
 
 `source` says what caused the last change: `init` is a restart of the device, not somebody
@@ -190,6 +191,7 @@ class BlindsActuator {
 |---|---|
 | `coverOpen`, `coverClose`, `coverStop`, `coverGoToPosition` | `Mono<Void>` |
 | `switchSet`, `lightSet`, `lightToggle`, `rgbSet`, `rgbwSet` | `Mono<Void>`; a parameter left `null` is not sent, and the device leaves that part as it is |
+| `booleanSet` | `Boolean.Set` (`{id, value}`) of a virtual boolean - the valve of a Neo Smart Water Valve is `boolean:200`; `Mono<Void>`, refused by the device for a read-only component (2.5.0) |
 | `coverStatus`, `switchStatus`, `lightStatus`, `rgbStatus`, `rgbwStatus` | the model of the component |
 | `status` | `Shelly.GetStatus`: every component under its key (`switch:0`, `sys`), each a raw map |
 | `bthomeSensorConfig`, `bthomeSensorStatus`, `bthomeDeviceConfig`, `webhookListSupported` | the model, and a raw map |
@@ -289,13 +291,17 @@ private Mono<Void> handle(ShellyEvent event) {
   plug (`pm1`), any other topic - and does not read the body then.
   `ShellyMqttDecoder.decodedComponents()` lists what is decoded: `switch`, `cover`, `light`,
   `rgb`, `rgbw`, `presencezone`, `illuminance`, `temperature`, `humidity`, `devicepower`,
-  `bthomedevice`, `bthomesensor`, and since 2.3.0 `em`, `emdata` (the three-phase meter - a consumer
-  that reads the BTHome gateways sees them from a Pro 3EM that is one: filter by the component).
+  `bthomedevice`, `bthomesensor`, since 2.3.0 `em`, `emdata` (the three-phase meter - a consumer
+  that reads the BTHome gateways sees them from a Pro 3EM that is one: filter by the component), and
+  since 2.5.0 `number`, `boolean`, `object` (the virtual components - every Shelly that has some
+  publishes them, so filter by the device and the component). `text`, `enum`, `group`, `button` and
+  `service` have no model and are skipped.
 - **A `Status` is the whole component, not a change.** A device repeats it about once a
   minute, changed or not; compare with what you hold.
 - **`ShellyDecodeException` is thrown** for a body that is not what its topic carries - not
   JSON, JSON without the id of the component, the status of another channel than the topic
-  names. Catch it inside the chain, as above: a listener that lets an error out has the
+  names. A virtual component has no id in its status, so for one the body has to carry
+  `last_update_ts` - `{}` and the status of another component do not. Catch it inside the chain, as above: a listener that lets an error out has the
   message handed back and delivered again at once.
 - **`Online(false)` is the last will of a device**, published by the broker when a connection
   ends without a goodbye - for a battery sensor that is "asleep".

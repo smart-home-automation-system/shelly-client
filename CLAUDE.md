@@ -4,7 +4,7 @@ Shared library (`cloud.cholewa:shelly-client`) in the **smart-home-automation-sy
 workspace. Java 21, Maven, published to GitHub Packages
 (`maven.pkg.github.com/smart-home-automation-system/shelly-client`, pom server id
 `github`). Consumed by `blinds-service`, `weather-service` (2.x) and `boiler-service`, `heating-service`,
-`shelly-cloud-service`, `water-service` (1.0.0); `appliance-service` reads the Gen1 meter (2.2.0, HAS-278);
+`shelly-cloud-service`, `water-service` (1.0.0 - it takes 2.5.0 for the water valve with HAS-316); `appliance-service` reads the Gen1 meter (2.2.0, HAS-278);
 `energy-service` the three-phase meter (2.3.0, HAS-327).
 
 Org-wide conventions and working rules (PR flow, branch naming `feature/HAS-<n>`,
@@ -98,6 +98,13 @@ Consequences:
   `{}` without a DHT22). The maps are keyed by the index of the sensor as text; `ExternalTemperatureValue` is the schema
   `ShellyUniStatusResponse` already used, with `tF` added - the Uni sends the same structure. First consumer:
   heating-service, the sauna thermometer of the epic HAS-366.
+- **The virtual components of a Shelly X device** (2.5.0, HAS-315): `NumberStatus`, `BooleanStatus`, `ObjectStatus`, read on
+  the Neo Smart Water Valve (XT1, firmware 2.0.1-xt1) from `Shelly.GetComponents` and its MQTT topics. **Their status has no
+  `id`** - the key carries it - so the decoder judges them by `last_update_ts` (`Model.virtual`) instead of the id
+  (`Model.withId`). The value of an object is an open map (the counter is `value.counter.total` m³, `minute_ts`, `by_minute`
+  litres - no typed `WaterCounter`: the consumer reads the map). `attrs` of `ShellyComponent` (`owner`, `role`) comes
+  with `include: [status, config]` all the same - the device refuses `attrs` in `include` (-103). `Boolean.Set` is shown
+  on `mockwebserver3` only.
 - **The dynamic components are not in `Shelly.GetStatus`** (`bthomedevice`, `bthomesensor`,
   the virtual ones): `Shelly.GetComponents` with `dynamic_only` lists them, a page at a time
   (11 on that plug) - `dynamicComponents` reads every page.

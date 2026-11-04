@@ -171,6 +171,20 @@ public class ShellyRpcClient {
         return read(address, "EMData.GetStatus", params(id), EmDataStatus.class, status -> status.getTotalAct() != null);
     }
 
+    /**
+     * {@code Boolean.Set} of a virtual component boolean of a Shelly X device - the valve of the
+     * Neo Smart Water Valve is {@code boolean:200} ({@code true} opens it). The device refuses it
+     * for a component whose access is read-only.
+     *
+     * @param id
+     *            the id of the component, 200 and up
+     */
+    public Mono<Void> booleanSet(String address, int id, boolean value) {
+        Map<String, Object> params = params(id);
+        params.put("value", value);
+        return command(address, "Boolean.Set", params);
+    }
+
     public Mono<BthomeSensorConfig> bthomeSensorConfig(String address, int id) {
         return read(address, "BTHomeSensor.GetConfig", params(id), BthomeSensorConfig.class,
             config -> config.getId() != null);

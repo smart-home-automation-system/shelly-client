@@ -1,5 +1,6 @@
 package cloud.cholewa.shelly.codec;
 
+import cloud.cholewa.shelly.model.BooleanStatus;
 import cloud.cholewa.shelly.model.BthomeDeviceStatus;
 import cloud.cholewa.shelly.model.BthomeSensorStatus;
 import cloud.cholewa.shelly.model.CoverStatus;
@@ -12,6 +13,8 @@ import cloud.cholewa.shelly.model.IlluminanceStatus;
 import cloud.cholewa.shelly.model.NotifyEvent;
 import cloud.cholewa.shelly.model.NotifyFullStatus;
 import cloud.cholewa.shelly.model.NotifyStatus;
+import cloud.cholewa.shelly.model.NumberStatus;
+import cloud.cholewa.shelly.model.ObjectStatus;
 import cloud.cholewa.shelly.model.PresenceStatus;
 import cloud.cholewa.shelly.model.RgbwStatus;
 import cloud.cholewa.shelly.model.SwitchStatus;
@@ -20,6 +23,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import tools.jackson.core.JacksonException;
 import tools.jackson.databind.DeserializationFeature;
@@ -32,37 +36,55 @@ import tools.jackson.databind.json.JsonMapper;
  * <p>
  * Most of what a device publishes is not about the house ({@code sys}, {@code wifi},
  * {@code cloud}): for a component without a model here the answer is nothing, and the body
- * is not even read. The three-phase energy meter is ({@code em}, {@code emdata} - 2.3.0). A body that should be a model and is not is a
- * {@link ShellyDecodeException}.
+ * is not even read. The three-phase energy meter is ({@code em}, {@code emdata} - 2.3.0), and so are the
+ * virtual components of a Shelly X device ({@code number}, {@code boolean}, {@code object} - 2.5.0). A body
+ * that should be a model and is not is a {@link ShellyDecodeException}.
  */
 public class ShellyMqttDecoder {
 
-    private record Model<T>(Class<T> type, Function<T, Integer> id) {
+    // isOf says whether a body is the status of the component of its topic; missing names what
+    // a body without it lacks. The id and the time are read as a Number, not through a
+    // ToIntFunction: a body may leave them out, and null is what tells it
+    private record Model<T>(Class<T> type, BiPredicate<T, Integer> isOf, String missing) {
 
-        // Every status carries the id of its component, and it is the id of the topic: JSON
-        // without it is JSON of something else, which would otherwise decode into a model of
-        // nulls, and JSON with another id is the status of another channel
+        // The status of a component carries its id, and it is the id of the topic: JSON without
+        // it is JSON of something else, which would otherwise decode into a model of nulls, and
+        // JSON with another id is the status of another channel
+        static <T> Model<T> withId(Class<T> type, Function<T, Number> id) {
+            return new Model<>(type, (status, index) -> index.equals(id.apply(status)), "the id of that component");
+        }
+
+        // The status of a virtual component has no id - the topic has the only one - so what
+        // it cannot be without is the time of its value: every one the valve sent has it, and
+        // "{}" or the status of another component does not
+        static <T> Model<T> virtual(Class<T> type, Function<T, Number> lastUpdate) {
+            return new Model<>(type, (status, index) -> lastUpdate.apply(status) != null, "the time of its value");
+        }
+
         Object read(JsonMapper mapper, byte[] body, int index) {
             T status = mapper.readValue(body, type);
-            return status != null && Integer.valueOf(index).equals(id.apply(status)) ? status : null;
+            return status != null && isOf.test(status, index) ? status : null;
         }
     }
 
     private static final Map<String, Model<?>> STATUSES = Map.ofEntries(
-        Map.entry("switch", new Model<>(SwitchStatus.class, SwitchStatus::getId)),
-        Map.entry("cover", new Model<>(CoverStatus.class, CoverStatus::getId)),
-        Map.entry("light", new Model<>(Gen2LightStatus.class, Gen2LightStatus::getId)),
-        Map.entry("rgb", new Model<>(RgbwStatus.class, RgbwStatus::getId)),
-        Map.entry("rgbw", new Model<>(RgbwStatus.class, RgbwStatus::getId)),
-        Map.entry("presencezone", new Model<>(PresenceStatus.class, PresenceStatus::getId)),
-        Map.entry("illuminance", new Model<>(IlluminanceStatus.class, IlluminanceStatus::getId)),
-        Map.entry("temperature", new Model<>(TemperatureStatus.class, TemperatureStatus::getId)),
-        Map.entry("humidity", new Model<>(HumidityStatus.class, HumidityStatus::getId)),
-        Map.entry("devicepower", new Model<>(DevicePowerStatus.class, DevicePowerStatus::getId)),
-        Map.entry("bthomedevice", new Model<>(BthomeDeviceStatus.class, BthomeDeviceStatus::getId)),
-        Map.entry("bthomesensor", new Model<>(BthomeSensorStatus.class, BthomeSensorStatus::getId)),
-        Map.entry("em", new Model<>(EmStatus.class, EmStatus::getId)),
-        Map.entry("emdata", new Model<>(EmDataStatus.class, EmDataStatus::getId)));
+        Map.entry("switch", Model.withId(SwitchStatus.class, SwitchStatus::getId)),
+        Map.entry("cover", Model.withId(CoverStatus.class, CoverStatus::getId)),
+        Map.entry("light", Model.withId(Gen2LightStatus.class, Gen2LightStatus::getId)),
+        Map.entry("rgb", Model.withId(RgbwStatus.class, RgbwStatus::getId)),
+        Map.entry("rgbw", Model.withId(RgbwStatus.class, RgbwStatus::getId)),
+        Map.entry("presencezone", Model.withId(PresenceStatus.class, PresenceStatus::getId)),
+        Map.entry("illuminance", Model.withId(IlluminanceStatus.class, IlluminanceStatus::getId)),
+        Map.entry("temperature", Model.withId(TemperatureStatus.class, TemperatureStatus::getId)),
+        Map.entry("humidity", Model.withId(HumidityStatus.class, HumidityStatus::getId)),
+        Map.entry("devicepower", Model.withId(DevicePowerStatus.class, DevicePowerStatus::getId)),
+        Map.entry("bthomedevice", Model.withId(BthomeDeviceStatus.class, BthomeDeviceStatus::getId)),
+        Map.entry("bthomesensor", Model.withId(BthomeSensorStatus.class, BthomeSensorStatus::getId)),
+        Map.entry("em", Model.withId(EmStatus.class, EmStatus::getId)),
+        Map.entry("emdata", Model.withId(EmDataStatus.class, EmDataStatus::getId)),
+        Map.entry("number", Model.virtual(NumberStatus.class, NumberStatus::getLastUpdateTs)),
+        Map.entry("boolean", Model.virtual(BooleanStatus.class, BooleanStatus::getLastUpdateTs)),
+        Map.entry("object", Model.virtual(ObjectStatus.class, ObjectStatus::getLastUpdateTs)));
 
     private static final Map<String, Class<?>> NOTIFICATIONS = Map.of(
         "NotifyStatus", NotifyStatus.class,
@@ -133,7 +155,7 @@ public class ShellyMqttDecoder {
             throw new ShellyDecodeException("Not " + what, notTheModel);
         }
         if (status == null) {
-            throw new ShellyDecodeException("Not " + what + ": the id of that component is not in it");
+            throw new ShellyDecodeException("Not " + what + ": " + model.missing() + " is not in it");
         }
         return Optional.of(new ShellyEvent.Status(topic.deviceId(), topic.component(), topic.index(), status));
     }

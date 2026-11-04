@@ -816,10 +816,64 @@ components:
           type: string
         name:
           type: string
+    # The virtual components (number, boolean, object - ids 200 and up) of a Shelly X device: owned by
+    # its service, they carry its readings (HAS-315, the Neo Smart Water Valve, an XT1 on 2.0.1). Their
+    # status has no id - the key of the topic or of Shelly.GetComponents is the only one there is.
+    NumberStatus:
+      description: >-
+        The status of a virtual component number - one reading of the service of a Shelly X device (the
+        flow rate, the water pressure, the water temperature of the valve). The unit is in its config
+        (meta.ui.unit), not here.
+      type: object
+      properties:
+        value:
+          description: The reading; null while the service has none.
+          type: number
+          format: double
+        source:
+          description: What set it - sys for the service of the device, rpc or a user otherwise.
+          type: string
+        last_update_ts:
+          description: When the value was last set, in seconds since the epoch.
+          type: integer
+          format: int64
+    BooleanStatus:
+      description: >-
+        The status of a virtual component boolean - a state of the service of a Shelly X device (the valve
+        open or closed). It is set with Boolean.Set when its access allows writes (crw).
+      type: object
+      properties:
+        value:
+          type: boolean
+        source:
+          description: What set it - sys for the service of the device, rpc or a user otherwise.
+          type: string
+        last_update_ts:
+          description: When the value was last set, in seconds since the epoch.
+          type: integer
+          format: int64
+    ObjectStatus:
+      description: >-
+        The status of a virtual component object - a structure of the service of a Shelly X device. Its
+        value is an open map, as it differs by the service: the counter of the valve is
+        value.counter.total (m3), value.counter.minute_ts and value.counter.by_minute (litres in each of
+        the last three minutes).
+      type: object
+      properties:
+        value:
+          type: object
+          additionalProperties: true
+        source:
+          description: What set it - sys for the service of the device, rpc or a user otherwise.
+          type: string
+        last_update_ts:
+          description: When the value was last set, in seconds since the epoch.
+          type: integer
+          format: int64
     ShellyComponent:
       description: >-
-        One component as Shelly.GetComponents lists it - its key with its status and its config, each
-        as a raw map, since what they hold differs by the type of the component. The dynamic components
+        One component as Shelly.GetComponents lists it - its key with its status, its config and its
+        attrs, each as a raw map, since what they hold differs by the type of the component. The dynamic components
         (bthomedevice, bthomesensor, the virtual ones) are listed only here: Shelly.GetStatus leaves them out.
       type: object
       properties:
@@ -830,6 +884,13 @@ components:
           type: object
           additionalProperties: true
         config:
+          type: object
+          additionalProperties: true
+        attrs:
+          description: >-
+            What the device says of the component beside its status and config, as a raw map: the owner and
+            the role of a virtual component (owner service:0, role flow_rate), which tell it apart on another
+            device of the same kind better than its id; the model_id of a bthomedevice.
           type: object
           additionalProperties: true
     ShellyComponentsPage:

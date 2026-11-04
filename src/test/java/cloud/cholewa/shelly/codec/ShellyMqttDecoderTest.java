@@ -3,6 +3,7 @@ package cloud.cholewa.shelly.codec;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import cloud.cholewa.shelly.model.BooleanStatus;
 import cloud.cholewa.shelly.model.BthomeDeviceStatus;
 import cloud.cholewa.shelly.model.BthomeSensorStatus;
 import cloud.cholewa.shelly.model.CoverStatus;
@@ -15,6 +16,8 @@ import cloud.cholewa.shelly.model.IlluminanceStatus;
 import cloud.cholewa.shelly.model.NotifyEvent;
 import cloud.cholewa.shelly.model.NotifyFullStatus;
 import cloud.cholewa.shelly.model.NotifyStatus;
+import cloud.cholewa.shelly.model.NumberStatus;
+import cloud.cholewa.shelly.model.ObjectStatus;
 import cloud.cholewa.shelly.model.PresenceStatus;
 import cloud.cholewa.shelly.model.RgbwStatus;
 import cloud.cholewa.shelly.model.SwitchStatus;
@@ -23,6 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
@@ -58,7 +63,10 @@ class ShellyMqttDecoderTest {
             Arguments.of("bthomedevice:200", "gen2/bthomedevice-status.json", BthomeDeviceStatus.class),
             Arguments.of("bthomesensor:201", "gen2/bthomesensor-status-number.json", BthomeSensorStatus.class),
             Arguments.of("em:0", "gen2/em-status.json", EmStatus.class),
-            Arguments.of("emdata:0", "gen2/emdata-status.json", EmDataStatus.class));
+            Arguments.of("emdata:0", "gen2/emdata-status.json", EmDataStatus.class),
+            Arguments.of("number:201", "gen2/number-status.json", NumberStatus.class),
+            Arguments.of("boolean:200", "gen2/boolean-status.json", BooleanStatus.class),
+            Arguments.of("object:200", "gen2/object-status.json", ObjectStatus.class));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -112,6 +120,70 @@ class ShellyMqttDecoderTest {
         assertThat(counters.as(EmStatus.class)).isEmpty();
     }
 
+    // the water valve (HAS-315): its readings are virtual components of its service, whose status
+    // has no id - the topic has the only one
+    @Test
+    void shouldGiveTheReadingsOfTheVirtualComponentsOfAShellyX() {
+        String valve = "neowatervalve-a1b2c3d4e5f6";
+
+        ShellyEvent.Status flow = (ShellyEvent.Status) sut
+            .decode(valve + ".status.number:200", sample("gen2/number-status.json")).orElseThrow();
+        assertThat(flow.deviceId()).isEqualTo(valve);
+        assertThat(flow.index()).isEqualTo(200);
+        assertThat(flow.as(NumberStatus.class)).get().satisfies(number -> {
+            assertThat(number.getValue()).isEqualTo(0.012);
+            assertThat(number.getSource()).isEqualTo("sys");
+            assertThat(number.getLastUpdateTs()).isEqualTo(1700000400L);
+        });
+
+        ShellyEvent.Status state = (ShellyEvent.Status) sut
+            .decode(valve + ".status.boolean:200", sample("gen2/boolean-status.json")).orElseThrow();
+        assertThat(state.as(BooleanStatus.class)).get().extracting(BooleanStatus::getValue).isEqualTo(true);
+        assertThat(state.as(NumberStatus.class)).isEmpty();
+
+        ShellyEvent.Status counter = (ShellyEvent.Status) sut
+            .decode(valve + ".status.object:200", sample("gen2/object-status.json")).orElseThrow();
+        assertThat(counter.as(ObjectStatus.class)).get().extracting(ObjectStatus::getValue)
+            .isEqualTo(Map.of("counter", Map.of("total", 12.345678901, "minute_ts", 1700000460, "by_minute",
+                List.of(4.5, 12, 0))));
+    }
+
+    // a value set from outside is told by its source; a number without a reading yet is null, not 0
+    @Test
+    void shouldGiveANumberWithoutAReadingAsNull() {
+        byte[] body = "{\"value\":null,\"source\":\"rpc\",\"last_update_ts\":1700000000}".getBytes(StandardCharsets.UTF_8);
+
+        ShellyEvent.Status event = (ShellyEvent.Status) sut.decode(DEVICE + ".status.number:202", body).orElseThrow();
+
+        assertThat(event.as(NumberStatus.class)).get().satisfies(number -> {
+            assertThat(number.getValue()).isNull();
+            assertThat(number.getSource()).isEqualTo("rpc");
+        });
+    }
+
+    // without an id to compare, the time of its value is what tells the status of a virtual
+    // component from "{}" and from the status of another component
+    @ParameterizedTest
+    @ValueSource(strings = { "{}", "{\"value\":3.5}", "{\"value\":true,\"source\":\"sys\"}", "{\"id\":0,\"output\":true}",
+        "null", "[]", "not json" })
+    void shouldRefuseABodyThatIsNotTheStatusOfAVirtualComponent(String body) {
+        byte[] bytes = body.getBytes(StandardCharsets.UTF_8);
+        for (String component : new String[] { "number:200", "boolean:200", "object:200" }) {
+            String key = DEVICE + ".status." + component;
+            assertThatThrownBy(() -> sut.decode(key, bytes))
+                .isInstanceOf(ShellyDecodeException.class).hasMessageContaining(component + " of " + DEVICE);
+        }
+    }
+
+    @Test
+    void shouldRefuseAValueOfAnotherKindThanItsComponent() {
+        byte[] text = "{\"value\":\"open\",\"source\":\"sys\",\"last_update_ts\":1700000000}"
+            .getBytes(StandardCharsets.UTF_8);
+
+        assertThatThrownBy(() -> sut.decode(DEVICE + ".status.object:200", text))
+            .isInstanceOf(ShellyDecodeException.class).hasMessageContaining("object:200");
+    }
+
     // the topic of the device and the routing key of the broker are the same message
     @Test
     void shouldDecodeTheTopicOfTheDeviceAsWell() {
@@ -143,7 +215,7 @@ class ShellyMqttDecoderTest {
     @ParameterizedTest
     @ValueSource(strings = { "status.sys", "status.mqtt", "status.cloud", "status.wifi", "status.ble",
         "status.bthome", "status.plugs_ui", "status.pm1:0", "status.em1:0", "status.em1data:0", "status.input:0",
-        "status.number:201", "status.presence", "status.modbus", "rpc", "status", "debug.log",
+        "status.text:200", "status.enum:200", "status.service:0", "status.presence", "status.modbus", "rpc", "status", "debug.log",
         // a component that has a model, without its id: not that component
         "status.temperature", "status.switch", "status.switch:x" })
     void shouldSkipWhatHasNoModelWithoutReadingTheBody(String key) {
