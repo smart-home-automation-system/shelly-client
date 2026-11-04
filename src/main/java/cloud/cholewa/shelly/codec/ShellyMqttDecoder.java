@@ -43,20 +43,21 @@ import tools.jackson.databind.json.JsonMapper;
 public class ShellyMqttDecoder {
 
     // isOf says whether a body is the status of the component of its topic; missing names what
-    // a body without it lacks
+    // a body without it lacks. The id and the time are read as a Number, not through a
+    // ToIntFunction: a body may leave them out, and null is what tells it
     private record Model<T>(Class<T> type, BiPredicate<T, Integer> isOf, String missing) {
 
         // The status of a component carries its id, and it is the id of the topic: JSON without
         // it is JSON of something else, which would otherwise decode into a model of nulls, and
         // JSON with another id is the status of another channel
-        static <T> Model<T> withId(Class<T> type, Function<? super T, ? extends Integer> id) {
+        static <T> Model<T> withId(Class<T> type, Function<T, Number> id) {
             return new Model<>(type, (status, index) -> index.equals(id.apply(status)), "the id of that component");
         }
 
         // The status of a virtual component has no id - the topic has the only one - so what
         // it cannot be without is the time of its value: every one the valve sent has it, and
         // "{}" or the status of another component does not
-        static <T> Model<T> virtual(Class<T> type, Function<? super T, ? extends Long> lastUpdate) {
+        static <T> Model<T> virtual(Class<T> type, Function<T, Number> lastUpdate) {
             return new Model<>(type, (status, index) -> lastUpdate.apply(status) != null, "the time of its value");
         }
 
