@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -273,6 +274,46 @@ class Gen2StatusDecodeTest {
     }
 
     // "Not sent" has to stay apart from "off" and from zero: nothing has a default.
+    // The virtual components of a Shelly X device (HAS-315): the shape of the water valve, an XT1 on
+    // firmware 2.0.1 - no id in a status, the value of an object an open map
+    @Test
+    void shouldDecodeTheVirtualComponentsOfAShellyX() {
+        NumberStatus flow = Samples.decode("gen2/number-status.json", NumberStatus.class);
+        assertEquals(0.012, flow.getValue());
+        assertEquals("sys", flow.getSource());
+        assertEquals(1700000400L, flow.getLastUpdateTs());
+
+        BooleanStatus state = Samples.decode("gen2/boolean-status.json", BooleanStatus.class);
+        assertTrue(state.getValue());
+        assertEquals(1700000100L, state.getLastUpdateTs());
+
+        ObjectStatus counter = Samples.decode("gen2/object-status.json", ObjectStatus.class);
+        assertEquals(1700000520L, counter.getLastUpdateTs());
+        Map<?, ?> values = assertInstanceOf(Map.class, counter.getValue().get("counter"));
+        assertEquals(12.345678901, values.get("total"));
+        assertEquals(1700000460, values.get("minute_ts"));
+        assertEquals(List.of(4.5, 12, 0), values.get("by_minute"));
+    }
+
+    // a whole number of a number arrives as a double all the same
+    @Test
+    void shouldReadAWholeNumberOfANumberAsADouble() {
+        assertEquals(0.0, Samples.decodeText("{\"value\":0}", NumberStatus.class).getValue());
+    }
+
+    // what Shelly.GetComponents says of a component beside its status and config - the owner and
+    // the role of a virtual one, by which a service finds the reading it wants
+    @Test
+    void shouldKeepTheAttributesOfAComponent() {
+        ShellyComponentsPage page = Samples.decode("rpc/components-virtual.json", ShellyComponentsPage.class);
+
+        assertEquals(5, page.getTotal());
+        ShellyComponent pressure = page.getComponents().get(2);
+        assertEquals("number:201", pressure.getKey());
+        assertEquals(Map.of("owner", "service:0", "role", "water_pressure"), pressure.getAttrs());
+        assertEquals(312.5, pressure.getStatus().get("value"));
+    }
+
     @Test
     void shouldLeaveWhatADeviceDoesNotSendUnset() {
         CoverStatus cover = Samples.decodeText("{}", CoverStatus.class);
@@ -315,6 +356,17 @@ class Gen2StatusDecodeTest {
         EmDataStatus counters = Samples.decodeText("{}", EmDataStatus.class);
         assertNull(counters.getTotalAct());
         assertNull(counters.getTotalActRet());
+
+        NumberStatus number = Samples.decodeText("{}", NumberStatus.class);
+        assertNull(number.getValue());
+        assertNull(number.getSource());
+        assertNull(number.getLastUpdateTs());
+
+        BooleanStatus state = Samples.decodeText("{}", BooleanStatus.class);
+        assertNull(state.getValue());
+        assertNull(state.getLastUpdateTs());
+
+        assertNull(Samples.decodeText("{}", ObjectStatus.class).getLastUpdateTs());
     }
 
     // The one exception: a list. The generator starts it empty, so a list a device did not
@@ -328,6 +380,8 @@ class Gen2StatusDecodeTest {
         // ...and a map: a component listed without its status or config reads as an empty one
         assertTrue(Samples.decodeText("{}", ShellyComponent.class).getStatus().isEmpty());
         assertTrue(Samples.decodeText("{}", ShellyComponent.class).getConfig().isEmpty());
+        assertTrue(Samples.decodeText("{}", ShellyComponent.class).getAttrs().isEmpty());
+        assertTrue(Samples.decodeText("{}", ObjectStatus.class).getValue().isEmpty());
     }
 
     // ...and only for a model that was decoded or made with new: the builder leaves a list it

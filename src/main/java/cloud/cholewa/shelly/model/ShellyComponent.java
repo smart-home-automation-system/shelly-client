@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @JsonPropertyOrder({ShellyComponent.JSON_PROPERTY_KEY, ShellyComponent.JSON_PROPERTY_STATUS,
-        ShellyComponent.JSON_PROPERTY_CONFIG})
+        ShellyComponent.JSON_PROPERTY_CONFIG, ShellyComponent.JSON_PROPERTY_ATTRS})
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
 @NoArgsConstructor
 @SuperBuilder
@@ -23,6 +23,8 @@ public class ShellyComponent {
     private Map<String, Object> status = new HashMap<>();
     public static final String JSON_PROPERTY_CONFIG = "config";
     private Map<String, Object> config = new HashMap<>();
+    public static final String JSON_PROPERTY_ATTRS = "attrs";
+    private Map<String, Object> attrs = new HashMap<>();
 
     public ShellyComponent key(String key) {
         this.key = key;
@@ -94,6 +96,32 @@ public class ShellyComponent {
         this.config = config;
     }
 
+    public ShellyComponent attrs(Map<String, Object> attrs) {
+        this.attrs = attrs;
+        return this;
+    }
+
+    public ShellyComponent putAttrsItem(String key, Object attrsItem) {
+        if (this.attrs == null) {
+            this.attrs = new HashMap<>();
+        }
+        this.attrs.put(key, attrsItem);
+        return this;
+    }
+
+    @Nullable
+    @JsonProperty(JSON_PROPERTY_ATTRS)
+    @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
+    public Map<String, Object> getAttrs() {
+        return attrs;
+    }
+
+    @JsonProperty(JSON_PROPERTY_ATTRS)
+    @JsonInclude(content = JsonInclude.Include.ALWAYS, value = JsonInclude.Include.USE_DEFAULTS)
+    public void setAttrs(Map<String, Object> attrs) {
+        this.attrs = attrs;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) {
@@ -104,12 +132,13 @@ public class ShellyComponent {
         }
         ShellyComponent shellyComponent = (ShellyComponent) o;
         return Objects.equals(this.key, shellyComponent.key) && Objects.equals(this.status, shellyComponent.status)
-                && Objects.equals(this.config, shellyComponent.config);
+                && Objects.equals(this.config, shellyComponent.config)
+                && Objects.equals(this.attrs, shellyComponent.attrs);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(key, status, config);
+        return Objects.hash(key, status, config, attrs);
     }
 
     @Override
@@ -119,6 +148,7 @@ public class ShellyComponent {
         sb.append("    key: ").append(toIndentedString(key)).append("\n");
         sb.append("    status: ").append(toIndentedString(status)).append("\n");
         sb.append("    config: ").append(toIndentedString(config)).append("\n");
+        sb.append("    attrs: ").append(toIndentedString(attrs)).append("\n");
         sb.append("}");
         return sb.toString();
     }
