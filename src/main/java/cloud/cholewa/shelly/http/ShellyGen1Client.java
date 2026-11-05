@@ -140,7 +140,29 @@ public class ShellyGen1Client {
     }
 
     public Mono<Relay> relay(String address, int index, boolean on) {
-        return get(address, "/relay/" + index, Map.of("turn", turn(on)), Relay.class, IS_RELAY);
+        return relay(address, index, on, null);
+    }
+
+    /**
+     * {@code /relay} with {@code timer}: the relay is switched and flips back by itself after so
+     * many seconds (2.6.0, HAS-404). For this one switch the timer replaces {@code auto_on} /
+     * {@code auto_off} of the device - a relay with {@code auto_off} of a minute stays on for the
+     * whole timer. {@code has_timer} and {@code timer_remaining} of the answer say it took it.
+     *
+     * @param timerSeconds
+     *            at least 1; {@code null} sends no timer, as {@link #relay(String, int, boolean)}. A
+     *            timer below a second is a {@link ShellyCallException} and no call: the API of Gen1
+     *            names no timer of 0, and a relay meant to flip back must not be left to chance
+     */
+    public Mono<Relay> relay(String address, int index, boolean on, Integer timerSeconds) {
+        Map<String, Object> query = new LinkedHashMap<>();
+        query.put("turn", turn(on));
+        query.put("timer", timerSeconds);
+        String path = "/relay/" + index;
+        if (timerSeconds != null && timerSeconds < 1) {
+            return Mono.error(new ShellyCallException("GET " + path + sent(query) + ": a timer below 1 s, not sent"));
+        }
+        return get(address, path, query, Relay.class, IS_RELAY);
     }
 
     public Mono<Relay> relayStatus(String address, int index) {

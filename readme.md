@@ -32,7 +32,7 @@ See [Usage](#usage) for what a service has to bring itself.
 
 Current consumers: `blinds-service`, `weather-service` (2.x); `boiler-service`, `heating-service`,
 `shelly-cloud-service`, `water-service` (1.0.0); `appliance-service` (2.2.0 - the Gen1 meter);
-`energy-service` (2.3.0 - the three-phase meter); `water-service` takes 2.5.0 for the water valve.
+`energy-service` (2.3.0 - the three-phase meter); `water-service` takes 2.5.0 for the water valve and 2.6.0 for the circulation pump (the timer of a relay, HAS-404).
 
 ## Installation
 
@@ -43,7 +43,7 @@ workflow on release.
 <dependency>
     <groupId>cloud.cholewa</groupId>
     <artifactId>shelly-client</artifactId>
-    <version>2.5.0</version>
+    <version>2.6.0</version>
 </dependency>
 ```
 
@@ -203,7 +203,7 @@ class BlindsActuator {
 | `roller` (`OPEN` / `CLOSE` / `STOP`), `rollerToPosition`, `rollerStatus` | `RollerStatus` |
 | `light`, `lightToggle`, `lightStatus` (`/light`: a bulb, a Duo) | `Gen1LightStatus` |
 | `color`, `colorStatus` (`/color`: an RGBW2 in the mode color) | `Gen1LightStatus` |
-| `relay`, `relayStatus` | `Relay` |
+| `relay`, `relayStatus` | `Relay` - `relay(address, index, on, timerSeconds)` (2.6.0, HAS-404) sends `timer`: the relay flips back by itself after so many seconds, which replaces `auto_off` of the device for that switch; `null` sends none, below 1 s fails as a `ShellyCallException` without a call |
 | `meter` (`/meter/0`: the power meter of a plug) | `Gen1Meter` - an answer with `is_valid: false` is one, judged by the caller |
 | `status`, `motionStatus` (`/status`) | `Gen1DeviceStatus`, `MotionStatus` |
 
