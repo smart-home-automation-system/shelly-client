@@ -151,6 +151,40 @@ class ShellyGen1ClientTest {
         assertThat(request.getUrl().query()).isEqualTo("turn=" + turn);
     }
 
+    // the timer of a switch replaces auto_off of the device - the circulation pump of HAS-404
+    @Test
+    void shouldSwitchARelayOnForATime() {
+        device.answersJson(RELAY);
+
+        sut.relay(device.address(), 1, true, 180).as(StepVerifier::create)
+            .assertNext(relay -> assertThat(relay.getSource()).isEqualTo("http")).verifyComplete();
+
+        RecordedRequest request = device.asked();
+        assertThat(request.getUrl().encodedPath()).isEqualTo("/relay/1");
+        assertThat(request.getUrl().query()).isEqualTo("turn=on&timer=180");
+    }
+
+    @Test
+    void shouldSendNoTimerWhenNoneIsGiven() {
+        device.answersJson(RELAY);
+
+        sut.relay(device.address(), 1, false, null).as(StepVerifier::create)
+            .expectNextCount(1).verifyComplete();
+
+        assertThat(device.asked().getUrl().query()).isEqualTo("turn=off");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = { 0, -5 })
+    void shouldRefuseATimerBelowASecondWithoutACall(int seconds) {
+        sut.relay(device.address(), 1, true, seconds).as(StepVerifier::create)
+            .expectErrorSatisfies(error -> assertThat(error).isExactlyInstanceOf(ShellyCallException.class)
+                .hasMessage("GET /relay/1?turn=on&timer=" + seconds + ": a timer below 1 s, not sent"))
+            .verify();
+
+        assertThat(device.calls()).isZero();
+    }
+
     @Test
     void shouldReadTheStatusOfADevice() {
         device.answersSample("gen1/roller-status.json");

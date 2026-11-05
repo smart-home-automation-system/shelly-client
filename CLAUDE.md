@@ -4,7 +4,7 @@ Shared library (`cloud.cholewa:shelly-client`) in the **smart-home-automation-sy
 workspace. Java 21, Maven, published to GitHub Packages
 (`maven.pkg.github.com/smart-home-automation-system/shelly-client`, pom server id
 `github`). Consumed by `blinds-service`, `weather-service` (2.x) and `boiler-service`, `heating-service`,
-`shelly-cloud-service`, `water-service` (1.0.0 - it takes 2.5.0 for the water valve with HAS-316); `appliance-service` reads the Gen1 meter (2.2.0, HAS-278);
+`shelly-cloud-service`, `water-service` (2.5.0 for the water valve with HAS-316, 2.6.0 for the timer of the relay of the circulation pump with HAS-404); `appliance-service` reads the Gen1 meter (2.2.0, HAS-278);
 `energy-service` the three-phase meter (2.3.0, HAS-327).
 
 Org-wide conventions and working rules (PR flow, branch naming `feature/HAS-<n>`,
