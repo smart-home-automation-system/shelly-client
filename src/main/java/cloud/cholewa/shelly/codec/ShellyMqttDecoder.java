@@ -15,6 +15,7 @@ import cloud.cholewa.shelly.model.NotifyFullStatus;
 import cloud.cholewa.shelly.model.NotifyStatus;
 import cloud.cholewa.shelly.model.NumberStatus;
 import cloud.cholewa.shelly.model.ObjectStatus;
+import cloud.cholewa.shelly.model.Pm1Status;
 import cloud.cholewa.shelly.model.PresenceStatus;
 import cloud.cholewa.shelly.model.RgbwStatus;
 import cloud.cholewa.shelly.model.SwitchStatus;
@@ -82,6 +83,7 @@ public class ShellyMqttDecoder {
         Map.entry("bthomesensor", Model.withId(BthomeSensorStatus.class, BthomeSensorStatus::getId)),
         Map.entry("em", Model.withId(EmStatus.class, EmStatus::getId)),
         Map.entry("emdata", Model.withId(EmDataStatus.class, EmDataStatus::getId)),
+        Map.entry("pm1", Model.withId(Pm1Status.class, Pm1Status::getId)),
         Map.entry("number", Model.virtual(NumberStatus.class, NumberStatus::getLastUpdateTs)),
         Map.entry("boolean", Model.virtual(BooleanStatus.class, BooleanStatus::getLastUpdateTs)),
         Map.entry("object", Model.virtual(ObjectStatus.class, ObjectStatus::getLastUpdateTs)));

@@ -32,7 +32,7 @@ See [Usage](#usage) for what a service has to bring itself.
 
 Current consumers: `blinds-service`, `weather-service` (2.x); `boiler-service`, `heating-service`,
 `shelly-cloud-service`, `water-service` (1.0.0); `appliance-service` (2.2.0 - the Gen1 meter);
-`energy-service` (2.3.0 - the three-phase meter); `water-service` takes 2.5.0 for the water valve and 2.6.0 for the circulation pump (the timer of a relay, HAS-404).
+`energy-service` (2.3.0 - the three-phase meter); `water-service` takes 2.5.0 for the water valve and 2.6.0 for the circulation pump (the timer of a relay, HAS-404); `aircon-service` takes 2.7.0 for the meter of the plug of an air conditioner (HAS-389, for HAS-390).
 
 ## Installation
 
@@ -43,7 +43,7 @@ workflow on release.
 <dependency>
     <groupId>cloud.cholewa</groupId>
     <artifactId>shelly-client</artifactId>
-    <version>2.6.0</version>
+    <version>2.7.0</version>
 </dependency>
 ```
 
@@ -88,6 +88,7 @@ The body of the MQTT topic `<device id>/status/<component>:<id>`, and the answer
 | `TemperatureStatus`, `HumidityStatus`, `DevicePowerStatus` | `temperature`, `humidity`, `devicepower` | What a battery thermometer (H&T) publishes when it wakes. |
 | `BthomeDeviceStatus`, `BthomeDeviceConfig`, `BthomeSensorStatus`, `BthomeSensorConfig` | `bthomedevice`, `bthomesensor` | A Bluetooth device paired with a gateway and its address, one value it reports, and which value that is. Checked on a Plug S Gen3 (2.1.0) with a WS90 paired (HAS-236): a sensor is published only when its value changes; `last_updated_ts` and `value` are `0` and `null` until the gateway has heard the object once. |
 | `EmStatus`, `EmDataStatus` | `em`, `emdata` | A three-phase energy meter (Pro 3EM, the profile `triphase`; 2.3.0, HAS-327): per phase `a_` / `b_` / `c_` the voltage, current, active and apparent power, power factor and frequency, the totals and the errors as words; the counters of the active energy in **Wh**, taken (`act`) and returned (`act_ret`), per phase and in total. A negative active power is energy returned to the grid. Checked on the meter of the house (2.1.0): the readings are published about every 5 s, the counters once a minute. |
+| `Pm1Status` | `pm1` | A power meter without a relay (PM Mini Gen3; 2.7.0, HAS-389): `voltage`, `current`, `apower` (W), `freq`, `aenergy` and `ret_aenergy` (the energy taken and returned: `total` Wh, `by_minute` mWh of the last three minutes, `minute_ts`), `errors` as words. Checked on the PM Mini Gen3 of the house (2.1.1): no temperature, no power factor, no output. |
 | `NumberStatus`, `BooleanStatus`, `ObjectStatus` | `number`, `boolean`, `object` | The virtual components of a Shelly X device (ids 200 and up, owned by its service; 2.5.0, HAS-315): `value` (a `Double`, a `Boolean`, an open map), `source` (`sys` when the service set it) and `last_update_ts` - **no `id`**: the key of the topic or of the component is the only one. The unit is in the config (`meta.ui.unit`). Checked on the Neo Smart Water Valve (XT1, 2.0.1): `boolean:200` the valve (`true` open), `number:200` the flow rate m³/min, `number:201` the pressure kPa, `number:202` the water temperature °C, `object:200` the counter - `value.counter.total` (m³), `minute_ts`, `by_minute` (litres in each of the last three minutes), read from the map. |
 | `ShellyComponentsPage`, `ShellyComponent` | - (an RPC answer) | One page of `Shelly.GetComponents`: each component with its `key` and its `status`, `config` and `attrs` as raw maps. `attrs` (2.5.0) holds the `owner` and the `role` of a virtual component (`service:0`, `flow_rate`) - what finds a reading on another device of the same kind - and the `model_id` of a `bthomedevice`. |
 | `ShellyPro4StatusResponse` | `switch` | The older model of a switch (since 0.0.x): its measurements are integers, so a decimal is cut off. New code reads `SwitchStatus`. |
@@ -196,6 +197,7 @@ class BlindsActuator {
 | `status` | `Shelly.GetStatus`: every component under its key (`switch:0`, `sys`), each a raw map |
 | `bthomeSensorConfig`, `bthomeSensorStatus`, `bthomeDeviceConfig`, `webhookListSupported` | the model, and a raw map |
 | `emStatus`, `emDataStatus` | `EM.GetStatus` and `EMData.GetStatus` of a three-phase meter: the readings (an answer has `total_act_power`) and the energy counters (an answer has `total_act`) |
+| `pm1Status` | `PM1.GetStatus` of a power meter without a relay (2.7.0): the readings (an answer has `apower`) |
 | `dynamicComponents` | `Shelly.GetComponents` with `dynamic_only`: every dynamic component (`bthomedevice`, `bthomesensor`, the virtual ones - `Shelly.GetStatus` leaves them out), status and config asked for by name, all pages read one after the other, at most 256 components; a failed page, a page that starts elsewhere than asked, or a change of `cfg_rev` or of the total between two pages fails the whole list |
 
 | `ShellyGen1Client` (Gen1, `GET` with the command in the query) | |
@@ -287,14 +289,15 @@ private Mono<Void> handle(ShellyEvent event) {
 
 - **Ask the registry before decoding.** Every queue gets every message of every device;
   `ShellyTopic.parse` costs nothing and gives the device id.
-- **`decode` answers nothing for what has no model** - `sys`, `wifi`, `cloud`, the meter of a
-  plug (`pm1`), any other topic - and does not read the body then.
+- **`decode` answers nothing for what has no model** - `sys`, `wifi`, `cloud`, `em1`, any other
+  topic - and does not read the body then.
   `ShellyMqttDecoder.decodedComponents()` lists what is decoded: `switch`, `cover`, `light`,
   `rgb`, `rgbw`, `presencezone`, `illuminance`, `temperature`, `humidity`, `devicepower`,
   `bthomedevice`, `bthomesensor`, since 2.3.0 `em`, `emdata` (the three-phase meter - a consumer
   that reads the BTHome gateways sees them from a Pro 3EM that is one: filter by the component), and
   since 2.5.0 `number`, `boolean`, `object` (the virtual components - every Shelly that has some
-  publishes them, so filter by the device and the component). `text`, `enum`, `group`, `button` and
+  publishes them, so filter by the device and the component), and since 2.7.0 `pm1` (the meter of a PM
+  Mini - a consumer that decoded every status gets it from those devices now). `text`, `enum`, `group`, `button` and
   `service` have no model and are skipped.
 - **A `Status` is the whole component, not a change.** A device repeats it about once a
   minute, changed or not; compare with what you hold.

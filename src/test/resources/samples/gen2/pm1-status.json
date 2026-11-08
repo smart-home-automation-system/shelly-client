@@ -1,0 +1,9 @@
+{
+  "id": 0,
+  "voltage": 231.6,
+  "current": 2.874,
+  "apower": 612.4,
+  "freq": 50.0,
+  "aenergy": {"total": 48210.512, "by_minute": [10206.465, 10188.102, 10197.330], "minute_ts": 1791888840},
+  "ret_aenergy": {"total": 0.000, "by_minute": [0.000, 0.000, 0.000], "minute_ts": 1791888840}
+}

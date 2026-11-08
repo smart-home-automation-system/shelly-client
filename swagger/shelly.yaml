@@ -421,6 +421,36 @@ components:
           type: array
           items:
             type: string
+    Pm1Status:
+      description: >-
+        The status of the component pm1 of a power meter without a relay (PM Mini Gen3) - the
+        readings now; also the body of the MQTT topic status/pm1:0. Read on the device (firmware
+        2.1.1): no temperature, no power factor. ret_aenergy counts the energy returned through
+        the meter. The errors are missing while there is none.
+      type: object
+      properties:
+        id:
+          type: integer
+        voltage:
+          type: number
+          format: double
+        current:
+          type: number
+          format: double
+        apower:
+          type: number
+          format: double
+        freq:
+          type: number
+          format: double
+        aenergy:
+          $ref: '#/components/schemas/EnergyCounter'
+        ret_aenergy:
+          $ref: '#/components/schemas/EnergyCounter'
+        errors:
+          type: array
+          items:
+            type: string
     EmStatus:
       description: >-
         The status of the component em of a three-phase energy meter (Pro 3EM in the profile
