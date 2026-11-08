@@ -5,7 +5,8 @@ workspace. Java 21, Maven, published to GitHub Packages
 (`maven.pkg.github.com/smart-home-automation-system/shelly-client`, pom server id
 `github`). Consumed by `blinds-service`, `weather-service` (2.x) and `boiler-service`, `heating-service`,
 `shelly-cloud-service`, `water-service` (2.5.0 for the water valve with HAS-316, 2.6.0 for the timer of the relay of the circulation pump with HAS-404); `appliance-service` reads the Gen1 meter (2.2.0, HAS-278);
-`energy-service` the three-phase meter (2.3.0, HAS-327).
+`energy-service` the three-phase meter (2.3.0, HAS-327); `aircon-service` the meter of the plug of an air conditioner
+(2.7.0, HAS-389).
 
 Org-wide conventions and working rules (PR flow, branch naming `feature/HAS-<n>`,
 "user writes library code, Claude reviews", public-repo hygiene) live in the workspace
@@ -105,6 +106,12 @@ Consequences:
   litres - no typed `WaterCounter`: the consumer reads the map). `attrs` of `ShellyComponent` (`owner`, `role`) comes
   with `include: [status, config]` all the same - the device refuses `attrs` in `include` (-103). `Boolean.Set` is shown
   on `mockwebserver3` only.
+- **The meter of a PM Mini Gen3** (2.7.0, HAS-389): `Pm1Status` and `pm1Status`, read on the plug of the air conditioner
+  of sanctum (S3PM-001PCEU16, firmware 2.1.1) through `PM1.GetStatus`; the MQTT topic `status/pm1:0` carries the same
+  fields (`deployment-tools/scripts/shelly/devices.md`). No temperature and no power factor - the task had them from the
+  documentation of another meter, the device sends neither. `pm1` was skipped by the decoder before; since 2.7.0 it is
+  decoded, so a consumer reading every status gets those events. `SwitchStatus` already carried `apower`, `voltage`
+  and `aenergy` of a Plus Plug S (checked on the plug of the indoor units, firmware 1.7.6) - no change.
 - **The dynamic components are not in `Shelly.GetStatus`** (`bthomedevice`, `bthomesensor`,
   the virtual ones): `Shelly.GetComponents` with `dynamic_only` lists them, a page at a time
   (11 on that plug) - `dynamicComponents` reads every page.
