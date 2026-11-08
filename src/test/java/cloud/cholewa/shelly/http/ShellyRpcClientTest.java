@@ -165,6 +165,20 @@ class ShellyRpcClientTest {
         assertThat(counters.getBody().utf8()).isEqualTo("{\"id\":0}");
     }
 
+    // the meter of a PM Mini Gen3 (HAS-389): PM1.GetStatus, an answer without the active power is not the model
+    @Test
+    void shouldReadAPowerMeter() {
+        device.answersSample("gen2/pm1-status.json");
+        sut.pm1Status(device.address(), 0).as(StepVerifier::create)
+            .assertNext(meter -> assertThat(meter.getApower()).isEqualTo(612.4)).verifyComplete();
+        RecordedRequest readings = device.asked();
+        assertThat(readings.getUrl().encodedPath()).isEqualTo("/rpc/PM1.GetStatus");
+        assertThat(readings.getBody().utf8()).isEqualTo("{\"id\":0}");
+
+        device.answersJson("{\"id\":0,\"voltage\":231.6}");
+        sut.pm1Status(device.address(), 0).as(StepVerifier::create).expectError(ShellyCallException.class).verify();
+    }
+
     // every component under its key, as a raw map: which there are differs by the device
     @Test
     void shouldReadTheStatusOfTheWholeDeviceAsRawComponents() {

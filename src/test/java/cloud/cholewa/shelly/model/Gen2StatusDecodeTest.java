@@ -256,6 +256,24 @@ class Gen2StatusDecodeTest {
         assertEquals(2158851.5, counters.getTotalActRet());
     }
 
+    // the shape a PM Mini Gen3 (2.1.1) answered (HAS-389), the values invented: a meter without a
+    // relay - no output, no temperature, no power factor; the energy in Wh, the minutes in mWh
+    @Test
+    void shouldDecodeTheReadingsOfAPowerMeter() {
+        Pm1Status meter = Samples.decode("gen2/pm1-status.json", Pm1Status.class);
+
+        assertEquals(0, meter.getId());
+        assertEquals(231.6, meter.getVoltage());
+        assertEquals(2.874, meter.getCurrent());
+        assertEquals(612.4, meter.getApower());
+        assertEquals(50.0, meter.getFreq());
+        assertEquals(48210.512, meter.getAenergy().getTotal());
+        assertEquals(List.of(10206.465, 10188.102, 10197.330), meter.getAenergy().getByMinute());
+        assertEquals(1791888840L, meter.getAenergy().getMinuteTs());
+        assertEquals(0.0, meter.getRetAenergy().getTotal());
+        assertTrue(meter.getErrors().isEmpty());
+    }
+
     // the shape a Plug S Gen3 (2.1.0) answered with a weather station paired (HAS-236): the status
     // and the config of every dynamic component as raw maps, the attrs left out
     @Test
@@ -356,6 +374,11 @@ class Gen2StatusDecodeTest {
         EmDataStatus counters = Samples.decodeText("{}", EmDataStatus.class);
         assertNull(counters.getTotalAct());
         assertNull(counters.getTotalActRet());
+
+        Pm1Status powerMeter = Samples.decodeText("{}", Pm1Status.class);
+        assertNull(powerMeter.getApower());
+        assertNull(powerMeter.getAenergy());
+        assertNull(powerMeter.getRetAenergy());
     }
 
     @Test

@@ -18,6 +18,7 @@ import cloud.cholewa.shelly.model.NotifyFullStatus;
 import cloud.cholewa.shelly.model.NotifyStatus;
 import cloud.cholewa.shelly.model.NumberStatus;
 import cloud.cholewa.shelly.model.ObjectStatus;
+import cloud.cholewa.shelly.model.Pm1Status;
 import cloud.cholewa.shelly.model.PresenceStatus;
 import cloud.cholewa.shelly.model.RgbwStatus;
 import cloud.cholewa.shelly.model.SwitchStatus;
@@ -64,6 +65,7 @@ class ShellyMqttDecoderTest {
             Arguments.of("bthomesensor:201", "gen2/bthomesensor-status-number.json", BthomeSensorStatus.class),
             Arguments.of("em:0", "gen2/em-status.json", EmStatus.class),
             Arguments.of("emdata:0", "gen2/emdata-status.json", EmDataStatus.class),
+            Arguments.of("pm1:0", "gen2/pm1-status.json", Pm1Status.class),
             Arguments.of("number:201", "gen2/number-status.json", NumberStatus.class),
             Arguments.of("boolean:200", "gen2/boolean-status.json", BooleanStatus.class),
             Arguments.of("object:200", "gen2/object-status.json", ObjectStatus.class));
@@ -214,10 +216,10 @@ class ShellyMqttDecoderTest {
     // which the bodies that are no JSON show.
     @ParameterizedTest
     @ValueSource(strings = { "status.sys", "status.mqtt", "status.cloud", "status.wifi", "status.ble",
-        "status.bthome", "status.plugs_ui", "status.pm1:0", "status.em1:0", "status.em1data:0", "status.input:0",
+        "status.bthome", "status.plugs_ui", "status.em1:0", "status.em1data:0", "status.input:0",
         "status.text:200", "status.enum:200", "status.service:0", "status.presence", "status.modbus", "rpc", "status", "debug.log",
         // a component that has a model, without its id: not that component
-        "status.temperature", "status.switch", "status.switch:x" })
+        "status.temperature", "status.switch", "status.switch:x", "status.pm1" })
     void shouldSkipWhatHasNoModelWithoutReadingTheBody(String key) {
         assertThat(sut.decode(DEVICE + "." + key, "not json at all".getBytes(StandardCharsets.UTF_8))).isEmpty();
         assertThat(sut.decode(DEVICE + "." + key, null)).isEmpty();
